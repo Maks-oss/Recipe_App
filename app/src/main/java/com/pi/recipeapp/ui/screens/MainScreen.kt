@@ -27,37 +27,45 @@ import coil.size.Size
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.ui.theme.RecipeAppTheme
 import com.pi.recipeapp.utils.AppConstants
-
-private val testRecipeList = listOf(
-    Recipe("name 1", AppConstants.IMAGE_NOT_FOUND_URL),
-    Recipe("name 2", AppConstants.IMAGE_NOT_FOUND_URL),
-    Recipe("name 3", AppConstants.IMAGE_NOT_FOUND_URL),
-    Recipe("name 4", AppConstants.IMAGE_NOT_FOUND_URL),
-)
+import kotlinx.coroutines.*
+//
+//private val testRecipeList = listOf(
+//    Recipe("name 1", AppConstants.IMAGE_NOT_FOUND_URL),
+//    Recipe("name 2", AppConstants.IMAGE_NOT_FOUND_URL),
+//    Recipe("name 3", AppConstants.IMAGE_NOT_FOUND_URL),
+//    Recipe("name 4", AppConstants.IMAGE_NOT_FOUND_URL),
+//)
 
 @Composable
-fun MainScreen() {
-    val recipeSearchInput by remember {
+fun MainScreen(mainViewModel: MainViewModel) {
+    var recipeSearchInput by remember {
         mutableStateOf("")
     }
+    var job: Job? = null
     Column(
         Modifier
             .padding(8.dp)
     ) {
-        RecipeTextField(recipeSearchInput)
+        RecipeTextField(recipeSearchInput, onValueChange = {
+            recipeSearchInput = it
+            job?.cancel()
+            if (it.isNotEmpty()){
+                job = CoroutineScope(Dispatchers.Default).launch {
+                    delay(1000)
+                    mainViewModel.applyRecipes(it)
+                }
+            }
+        })
         Spacer(modifier = Modifier.padding(8.dp))
-        RecipeList()
+        RecipeList(mainViewModel.recipesState)
     }
 }
 
 @Composable
-private fun RecipeTextField(recipeSearchInput: String) {
-    var recipeSearchInput1 = recipeSearchInput
+private fun RecipeTextField(recipeSearchInput: String,onValueChange:(String)->Unit) {
     OutlinedTextField(
-        value = recipeSearchInput1,
-        onValueChange = {
-            recipeSearchInput1 = it
-        },
+        value = recipeSearchInput,
+        onValueChange = onValueChange,
         label = { Text(text = "Enter ingredient...") },
         leadingIcon = {
             Icon(imageVector = Icons.Filled.Search, contentDescription = "recipe search")
@@ -69,9 +77,10 @@ private fun RecipeTextField(recipeSearchInput: String) {
 }
 
 @Composable
-private fun RecipeList() {
+private fun RecipeList(recipes: List<Recipe>) {
+
     LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Fixed(2)) {
-        items(testRecipeList) {
+        items(recipes) {
             RecipeListItem(it)
         }
     }
@@ -100,14 +109,14 @@ private fun RecipeListItem(recipe: Recipe) {
     }
 }
 
-@Preview(
-    showBackground = true,
-    showSystemUi = true
-)
-@Composable
-fun MainScreenPreview() {
-
-    RecipeAppTheme {
-        MainScreen()
-    }
-}
+//@Preview(
+//    showBackground = true,
+//    showSystemUi = true
+//)
+//@Composable
+//fun MainScreenPreview() {
+//
+//    RecipeAppTheme {
+//        MainScreen({})
+//    }
+//}
