@@ -1,5 +1,6 @@
 package com.pi.recipeapp.ui.screens
 
+import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -27,16 +29,11 @@ import coil.size.Size
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.ui.animation.DisplayShimmerEffect
 
-//
-//private val testRecipeList = listOf(
-//    Recipe("name 1", AppConstants.IMAGE_NOT_FOUND_URL),
-//    Recipe("name 2", AppConstants.IMAGE_NOT_FOUND_URL),
-//    Recipe("name 3", AppConstants.IMAGE_NOT_FOUND_URL),
-//    Recipe("name 4", AppConstants.IMAGE_NOT_FOUND_URL),
-//)
+
 
 @Composable
 fun MainScreen(mainViewModel: MainViewModel) {
+    val recipeState = mainViewModel.recipesState
     Column(
         Modifier
             .padding(8.dp)
@@ -46,11 +43,13 @@ fun MainScreen(mainViewModel: MainViewModel) {
             onValueChange = mainViewModel::onRecipeSearchInputChange
         )
         Spacer(modifier = Modifier.padding(8.dp))
-        Crossfade(targetState = mainViewModel.isRecipesLoading) { isRecipesLoading ->
+        Crossfade(targetState = mainViewModel.recipesState.isLoading) { isRecipesLoading ->
             if (isRecipesLoading) {
                 DisplayShimmerEffect()
+            } else if (recipeState.errorMessage != null) {
+                Toast.makeText(LocalContext.current, stringResource(id = recipeState.errorMessage), Toast.LENGTH_SHORT).show()
             } else {
-                RecipeList(mainViewModel.recipesState)
+                RecipeList(recipeState.data)
             }
         }
     }
@@ -72,13 +71,15 @@ private fun RecipeTextField(recipeSearchInput: String, onValueChange: (String) -
 }
 
 @Composable
-private fun RecipeList(recipes: List<Recipe>) {
-
-    LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Fixed(2)) {
-        items(recipes) {
-            RecipeListItem(it)
+private fun RecipeList(recipes: List<Recipe>?) {
+    recipes?.let { recipes ->
+        LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Fixed(2)) {
+            items(recipes) {
+                RecipeListItem(it)
+            }
         }
     }
+
 }
 
 @Composable

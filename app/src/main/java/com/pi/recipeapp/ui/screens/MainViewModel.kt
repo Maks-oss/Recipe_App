@@ -6,42 +6,46 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pi.recipeapp.R
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.mapper.RecipesMapper
 import com.pi.recipeapp.retrofit.RecipesService
+import com.pi.recipeapp.utils.Result
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainViewModel(private val recipesService: RecipesService) :
     ViewModel() {
-    var recipesState by mutableStateOf<List<Recipe>>(emptyList())
-        private set
-    var isRecipesLoading by mutableStateOf(false)
-        private set
 
+    var recipesState by mutableStateOf<Result<List<Recipe>>>(Result.default())
+        private set
     var recipeSearchInput by mutableStateOf("")
         private set
     private var job: Job? = null
 
     fun onRecipeSearchInputChange(value: String) {
         recipeSearchInput = value
-        if (recipeSearchInput.isNotEmpty()) {
-            isRecipesLoading = true
-            job?.cancel()
-            job = viewModelScope.launch {
-                delay(3000)
-                applyRecipes(recipeSearchInput)
-            }
+        job?.cancel()
+        job = viewModelScope.launch {
+            recipesState = Result.loading()
+            delay(2000)
+            applyRecipes()
         }
+
     }
 
-    private suspend fun applyRecipes(query: String) {
-        val recipesBody = recipesService.getRecipesByNamesResponse(query).also {
-            Log.d("TAG", "applyRecipes: ${it.raw().request.url} ${it.body()}")
-        }.body()
-        recipesState = RecipesMapper.convertRecipeDtoToDomain(recipesBody!!)
-        isRecipesLoading = false
+    private suspend fun applyRecipes() {
+        if (recipeSearchInput.isNotEmpty()) {
+            val recipesBody = recipesService.getRecipesByNamesResponse(recipeSearchInput).also {
+                Log.d("TAG", "applyRecipes: ${it.raw().request.url} ${it.body()}")
+            }.body()
+            val recipesDomain = RecipesMapper.convertRecipeDtoToDomain(recipesBody!!)
+            recipesState = Result.success(recipesDomain)
+            if (recipesState.data.isNullOrEmpty()) {
+                recipesState = Result.error(R.string.empty_request_error)
+            }
+        }
     }
 
 }
