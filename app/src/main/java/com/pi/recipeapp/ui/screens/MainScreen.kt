@@ -28,7 +28,7 @@ import coil.request.ImageRequest
 import coil.size.Size
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.ui.animation.DisplayShimmerEffect
-
+import com.pi.recipeapp.utils.Status
 
 
 @Composable
@@ -43,13 +43,16 @@ fun MainScreen(mainViewModel: MainViewModel) {
             onValueChange = mainViewModel::onRecipeSearchInputChange
         )
         Spacer(modifier = Modifier.padding(8.dp))
-        Crossfade(targetState = mainViewModel.recipesState.isLoading) { isRecipesLoading ->
-            if (isRecipesLoading) {
-                DisplayShimmerEffect()
-            } else if (recipeState.errorMessage != null) {
-                Toast.makeText(LocalContext.current, stringResource(id = recipeState.errorMessage), Toast.LENGTH_SHORT).show()
-            } else {
-                RecipeList(recipeState.data)
+        Crossfade(targetState = recipeState.status) { recipeStatus ->
+            when(recipeStatus){
+                Status.LOADING ->  DisplayShimmerEffect()
+                Status.SUCCESS -> RecipeList(recipeState.data)
+                Status.ERROR -> {
+                    recipeState.errorMessage?.let {
+                        Toast.makeText(LocalContext.current, stringResource(id = recipeState.errorMessage), Toast.LENGTH_SHORT).show()
+                    }
+                }
+                Status.DEFAULT -> {}
             }
         }
     }

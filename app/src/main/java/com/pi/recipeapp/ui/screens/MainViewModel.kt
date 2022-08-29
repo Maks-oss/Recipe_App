@@ -45,6 +45,8 @@ class MainViewModel(private val recipesService: RecipesService) :
             if (recipesState.data.isNullOrEmpty()) {
                 recipesState = Result.error(R.string.empty_request_error)
             }
+        } else {
+            recipesState = Result.default()
         }
     }
 
