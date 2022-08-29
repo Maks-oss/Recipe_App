@@ -7,7 +7,7 @@ import kotlin.reflect.full.memberProperties
 
 object RecipesMapper {
     fun convertRecipeDtoToDomain(recipeDto: RecipeDto): List<Recipe> {
-        val meals = recipeDto.meals
+        val meals = recipeDto.meals ?: return emptyList()
         return mutableListOf<Recipe>().apply {
             meals.forEach { meal ->
                 add(

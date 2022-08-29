@@ -13,11 +13,12 @@ import androidx.lifecycle.ViewModelProvider
 import com.pi.recipeapp.ui.screens.MainScreen
 import com.pi.recipeapp.ui.screens.MainViewModel
 import com.pi.recipeapp.ui.theme.RecipeAppTheme
+import org.koin.androidx.viewmodel.ext.android.getViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        val viewModel = getViewModel<MainViewModel>()
         setContent {
             RecipeAppTheme {
                 MainScreen(viewModel)

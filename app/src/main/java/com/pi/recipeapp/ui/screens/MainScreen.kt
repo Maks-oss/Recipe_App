@@ -38,24 +38,11 @@ import kotlinx.coroutines.*
 
 @Composable
 fun MainScreen(mainViewModel: MainViewModel) {
-    var recipeSearchInput by remember {
-        mutableStateOf("")
-    }
-    var job: Job? = null
     Column(
         Modifier
             .padding(8.dp)
     ) {
-        RecipeTextField(recipeSearchInput, onValueChange = {
-            recipeSearchInput = it
-            job?.cancel()
-            if (it.isNotEmpty()){
-                job = CoroutineScope(Dispatchers.Default).launch {
-                    delay(1000)
-                    mainViewModel.applyRecipes(it)
-                }
-            }
-        })
+        RecipeTextField(mainViewModel.recipeSearchInput, onValueChange = mainViewModel::onRecipeSearchInputChange)
         Spacer(modifier = Modifier.padding(8.dp))
         RecipeList(mainViewModel.recipesState)
     }
