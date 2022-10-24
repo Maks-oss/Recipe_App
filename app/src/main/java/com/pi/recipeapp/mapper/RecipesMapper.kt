@@ -29,15 +29,16 @@ object RecipesMapper {
         return hashMapOf<String, String>().apply {
             val ingredients = meal.getPropertiesValues("strIngredient")
             val measures = meal.getPropertiesValues("strMeasure")
-            for (index in ingredients.indices){
-                this[ingredients[index]] = measures[index]
+            for (index in ingredients.indices) {
+                this[ingredients[index]] = measures.getOrElse(index, defaultValue = { "" })
             }
         }
     }
-    private fun Meal.getPropertiesValues(property:String): List<String>{
+
+    private fun Meal.getPropertiesValues(property: String): List<String> {
         return this::class.memberProperties.filter { ingr ->
             val value = ingr.getter.call(this) as? String
-            ingr.name.contains(property) && !value.isNullOrEmpty()
+            ingr.name.contains(property) && !value.isNullOrEmpty() && !value.startsWith(" ")
         }.map { ingr ->
             ingr.getter.call(this) as String
         }

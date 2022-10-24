@@ -1,8 +1,8 @@
-package com.pi.recipeapp.ui.screens
+package com.pi.recipeapp.ui.screens.main
 
-import android.widget.Toast
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,42 +26,55 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
+import com.pi.recipeapp.R
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.ui.animation.DisplayShimmerEffect
-import com.pi.recipeapp.utils.Status
+import com.pi.recipeapp.ui.screens.uistate.UiState
 
 
 @Composable
-fun MainScreen(mainViewModel: MainViewModel) {
-    val recipeState = mainViewModel.recipesState
+fun MainScreen(
+    provideSearchInput: () -> String,
+    provideRecipesState: () -> UiState<List<Recipe>>,
+    onSearchInputChange: (String) -> Unit,
+    navigateToDetailScreen: (Recipe) -> Unit,
+    showSnackbar: (String) -> Unit
+) {
+
     Column(
         Modifier
             .padding(8.dp)
     ) {
         RecipeTextField(
-            mainViewModel.recipeSearchInput,
-            onValueChange = mainViewModel::onRecipeSearchInputChange
+            provideSearchInput,
+            onValueChange = onSearchInputChange
         )
         Spacer(modifier = Modifier.padding(8.dp))
-        Crossfade(targetState = recipeState.status) { recipeStatus ->
-            when(recipeStatus){
-                Status.LOADING ->  DisplayShimmerEffect()
-                Status.SUCCESS -> RecipeList(recipeState.data)
-                Status.ERROR -> {
-                    recipeState.errorMessage?.let {
-                        Toast.makeText(LocalContext.current, stringResource(id = recipeState.errorMessage), Toast.LENGTH_SHORT).show()
-                    }
-                }
-                Status.DEFAULT -> {}
+
+        Crossfade(targetState = provideRecipesState) { provideState ->
+            val recipeState = provideState()
+            if (recipeState.isLoading) {
+                DisplayShimmerEffect()
+            }
+            recipeState.data?.let { recipes ->
+                if (recipes.isEmpty())
+                    showSnackbar(stringResource(id = R.string.empty_request_error))
+                else
+                    RecipeList(recipes, navigateToDetailScreen)
+            }
+            recipeState.errorMessage?.let { error ->
+                showSnackbar(error)
+
             }
         }
+
     }
 }
 
 @Composable
-private fun RecipeTextField(recipeSearchInput: String, onValueChange: (String) -> Unit) {
+private fun RecipeTextField(recipeSearchInput: () -> String, onValueChange: (String) -> Unit) {
     OutlinedTextField(
-        value = recipeSearchInput,
+        value = recipeSearchInput(),
         onValueChange = onValueChange,
         label = { Text(text = "Enter ingredient...") },
         leadingIcon = {
@@ -74,23 +87,24 @@ private fun RecipeTextField(recipeSearchInput: String, onValueChange: (String) -
 }
 
 @Composable
-private fun RecipeList(recipes: List<Recipe>?) {
-    recipes?.let { recipes ->
-        LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Fixed(2)) {
-            items(recipes) {
-                RecipeListItem(it)
-            }
+private fun RecipeList(recipes: List<Recipe>, onRecipeItemClick: (Recipe) -> Unit) {
+
+    LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Fixed(2)) {
+        items(recipes) {
+            RecipeListItem(it, onRecipeItemClick)
         }
     }
+
 
 }
 
 @Composable
-private fun RecipeListItem(recipe: Recipe) {
+private fun RecipeListItem(recipe: Recipe, onRecipeItemClick: (Recipe) -> Unit) {
     Card(
         modifier = Modifier
             .padding(8.dp)
-            .fillMaxWidth(), shape = CutCornerShape(16.dp)
+            .fillMaxWidth()
+            .clickable(onClick = { onRecipeItemClick(recipe) }), shape = CutCornerShape(16.dp)
     ) {
         Column {
             Image(

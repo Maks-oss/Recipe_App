@@ -17,7 +17,7 @@ class RecipeApplication: Application() {
             androidLogger(if (BuildConfig.DEBUG) Level.ERROR else Level.NONE)
             //inject Android context
             androidContext(this@RecipeApplication)
-            modules(retrofitModule, viewModelModule)
+            modules(retrofitModule, repositoryModule,viewModelModule)
         }
 
     }

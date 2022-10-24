@@ -8,5 +8,5 @@ import retrofit2.http.Query
 
 interface RecipesService {
     @GET("search.php")
-    suspend fun getRecipesByNamesResponse(@Query("s") query: String): Response<RecipeDto>
+    suspend fun getRecipesByNamesResponse(@Query("s") query: String): RecipeDto
 }
