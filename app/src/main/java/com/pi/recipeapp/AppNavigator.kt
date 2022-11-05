@@ -1,5 +1,9 @@
 package com.pi.recipeapp
 
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -24,6 +28,7 @@ fun AppNavigator() {
     val mainViewModel = getViewModel<MainViewModel>()
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
+
     NavHost(navController = navController, startDestination = Routes.MainScreenRoute.route) {
         composable(Routes.MainScreenRoute.route) {
             Scaffold(scaffoldState = scaffoldState, floatingActionButton = {
