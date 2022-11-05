@@ -38,5 +38,5 @@ fun DetailScreen(recipe: Recipe) {
 @Preview(showSystemUi = true)
 @Composable
 fun DetailScreenPreview(){
-    DetailScreen(Recipe("",AppConstants.IMAGE_NOT_FOUND_URL))
+//    DetailScreen(Recipe("",AppConstants.IMAGE_NOT_FOUND_URL))
 }

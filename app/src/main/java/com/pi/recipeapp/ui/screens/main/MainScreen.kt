@@ -3,22 +3,18 @@ package com.pi.recipeapp.ui.screens.main
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -43,7 +39,8 @@ fun MainScreen(
 
     Column(
         Modifier
-            .padding(8.dp)
+            .padding(8.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
         RecipeTextField(
             provideSearchInput,
@@ -64,10 +61,12 @@ fun MainScreen(
             }
             recipeState.errorMessage?.let { error ->
                 showSnackbar(error)
-
             }
         }
 
+//        FloatingActionButton(onClick = {  }, modifier = Modifier.weight(1f,false)) {
+//            Icon(imageVector = Icons.Filled.PhotoCamera, contentDescription = "")
+//        }
     }
 }
 

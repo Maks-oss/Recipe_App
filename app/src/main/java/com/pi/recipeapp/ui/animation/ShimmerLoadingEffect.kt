@@ -67,12 +67,10 @@ fun ShimmerGridItem(brush: Brush) {
 }
 
 @Composable
-fun DisplayShimmerEffect(/*isLoading: Boolean*/) {
-//    if (isLoading) {
-        LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Fixed(2)) {
-            items(10) {
-                LoadingShimmerEffect()
-            }
+fun DisplayShimmerEffect() {
+    LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Fixed(2)) {
+        items(10) {
+            LoadingShimmerEffect()
         }
-//    }
+    }
 }

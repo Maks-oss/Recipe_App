@@ -19,6 +19,9 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
 
     var recipesState by mutableStateOf<UiState<List<Recipe>>>(UiState())
         private set
+//    var recipesFromDb by mutableStateOf<Flow<Recipe>>(emptyFlow())
+//        private set
+
     var recipeSearchInput: String by mutableStateOf("")
         private set
     private var job: Job? = null
@@ -26,22 +29,22 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
 
     fun onRecipeSearchInputChange(value: String) {
         job?.cancel()
+        recipeSearchInput = value
         if (value.isNotEmpty()) {
             job = viewModelScope.launch {
-                recipeSearchInput = value
                 delay(2000)
-                getRecipes()
+                fetchRecipes()
             }
         }
     }
 
-    private suspend fun getRecipes() {
+
+    private suspend fun fetchRecipes() {
         recipesState = recipesState.copy(
             data = null,
             isLoading = true,
             errorMessage = null
         )
-        delay(1000)
         val result = recipeRepository.fetchMeals(recipeSearchInput)
         recipesState = when (result) {
             is Response.Success -> recipesState.copy(
