@@ -2,15 +2,14 @@ package com.pi.recipeapp.ui.screens.imagesearch
 
 import android.graphics.Bitmap
 import android.provider.MediaStore
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.PhotoCamera
@@ -29,13 +28,10 @@ import coil.request.ImageRequest
 import coil.size.Size
 import com.pi.recipeapp.R
 import com.pi.recipeapp.ml.LiteModelAiyVisionClassifierFoodV11
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.tensorflow.lite.support.image.TensorImage
 
 @Composable
-fun RecipeImageSearchScreen() {
+fun RecipeImageSearchScreen(navigateToRecipeDetail: (String) -> Unit) {
     var imageBitmap by remember {
         mutableStateOf<Bitmap?>(null)
     }
@@ -75,23 +71,35 @@ fun RecipeImageSearchScreen() {
                 .align(Alignment.CenterHorizontally)
         )
         LaunchedEffect(imageBitmap) {
-            withContext(Dispatchers.Default) {
-                if (imageBitmap != null) {
-                    val model = LiteModelAiyVisionClassifierFoodV11.newInstance(context)
+//            withContext(Dispatchers.Default) {
+            if (imageBitmap != null) {
+                val model = LiteModelAiyVisionClassifierFoodV11.newInstance(context)
 
-                    val image = TensorImage.fromBitmap(
-                        imageBitmap
-                    )
-                    val outputs = model.process(image)
-                    val probability = outputs.probabilityAsCategoryList
-                    val recipe = probability.maxByOrNull { it.score }?.label ?: ""
-                    recipeName = recipe
-                    model.close()
+                val image = TensorImage.fromBitmap(
+                    imageBitmap
+                )
+                val outputs = model.process(image)
+                val probability = outputs.probabilityAsCategoryList
+                val recipe = probability.maxByOrNull { it.score }?.label ?: ""
+                recipeName = recipe
+                model.close()
+            }
+//            }
+        }
+        if (recipeName.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = recipeName)
+                TextButton(
+                    onClick = { navigateToRecipeDetail(recipeName) }
+                ) {
+                    Text(text = "Show Recipe")
                 }
             }
-        }
 
-        Text(text = recipeName)
+        }
         Spacer(modifier = Modifier.padding(8.dp))
         ButtonWithIcon(icon = Icons.Filled.PhotoCamera, text = "Take recipe photo") {
             takePictureFromCamera.launch()
@@ -123,5 +131,5 @@ private fun ButtonWithIcon(
 )
 @Composable
 fun RecipeImageSearchScreenPreview() {
-    RecipeImageSearchScreen()
+    RecipeImageSearchScreen {}
 }

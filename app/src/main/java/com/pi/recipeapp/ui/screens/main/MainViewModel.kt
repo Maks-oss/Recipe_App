@@ -25,7 +25,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
     var recipeSearchInput: String by mutableStateOf("")
         private set
     private var job: Job? = null
-    var currentRecipe: Recipe by Delegates.notNull()
+    var currentRecipe: Recipe? by mutableStateOf(null)
 
     fun onRecipeSearchInputChange(value: String) {
         job?.cancel()
@@ -38,7 +38,12 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         }
     }
 
-
+    fun fetchRecipe(name: String) {
+        currentRecipe = null
+        viewModelScope.launch {
+            currentRecipe = recipeRepository.fetchRecipeByName(name).data
+        }
+    }
     private suspend fun fetchRecipes() {
         recipesState = recipesState.copy(
             data = null,

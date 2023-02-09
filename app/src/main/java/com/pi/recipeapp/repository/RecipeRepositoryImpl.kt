@@ -35,6 +35,22 @@ class RecipeRepositoryImpl(
 
     }
 
+    override suspend fun fetchRecipeByName(name: String): Response<Recipe> {
+        return try {
+            val recipes = recipesService.getRecipesByNamesResponse(name)
+            if (recipes.meals.isNullOrEmpty()) {
+                Response.Success(emptyList<List<Recipe>>())
+            }
+            Log.d(TAG, "Recipes from server")
+
+            val recipe = RecipesMapper.convertRecipeDtoToDomain(recipes).first()
+            Response.Success(recipe)
+        } catch (exc: Exception) {
+            Log.e(TAG,"fetchMeals: ${exc.message}")
+            Response.Error(exc.message)
+        }
+    }
+
     private suspend fun insertIntoDatabase(recipeList: List<Recipe>, query: String) {
         recipeList.forEach { recipe ->
             recipesDao.insertRecipe(RecipesMapper.convertRecipetoRecipeEntity(recipe, query))

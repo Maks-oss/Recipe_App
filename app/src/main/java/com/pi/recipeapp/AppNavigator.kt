@@ -73,7 +73,10 @@ fun AppNavigator() {
                     navController.navigateThroughDrawer(Routes.RecipeImageSearchScreen.route, coroutineScope, scaffoldState)
                 })
             }) {
-                RecipeImageSearchScreen()
+                RecipeImageSearchScreen { name ->
+                    mainViewModel.fetchRecipe(name)
+                    navController.navigate(Routes.DetailScreenRoute.route)
+                }
             }
         }
     }

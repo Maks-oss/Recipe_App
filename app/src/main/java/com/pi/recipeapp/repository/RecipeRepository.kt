@@ -6,5 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface RecipeRepository {
     suspend fun fetchMeals(query: String): Response<List<Recipe>>
+    suspend fun fetchRecipeByName(name: String): Response<Recipe>
 //    suspend fun fetchMealsFromDatabase(query: String): Flow<Recipe>
 }
