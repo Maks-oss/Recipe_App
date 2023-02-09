@@ -21,7 +21,8 @@ class MainActivity : ComponentActivity() {
         val viewModel = getViewModel<MainViewModel>()
         setContent {
             RecipeAppTheme {
-               RecipeImageSearchScreen()
+               AppNavigator()
+//                RecipeImageSearchScreen()
             }
         }
     }

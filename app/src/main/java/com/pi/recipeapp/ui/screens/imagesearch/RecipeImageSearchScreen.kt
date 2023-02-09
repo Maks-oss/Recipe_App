@@ -41,11 +41,13 @@ fun RecipeImageSearchScreen() {
     }
     val context = LocalContext.current
     val takePictureFromFolder =
-        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
-            imageBitmap = MediaStore.Images.Media.getBitmap(
-                context.contentResolver,
-                it
-            )
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri != null) {
+                imageBitmap = MediaStore.Images.Media.getBitmap(
+                    context.contentResolver,
+                    uri
+                )
+            }
         }
     val takePictureFromCamera =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) {

@@ -1,27 +1,29 @@
 package com.pi.recipeapp
 
-import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContract
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.pi.recipeapp.ui.navigation.navigateThroughDrawer
+import com.pi.recipeapp.ui.scaffold_components.RecipeModalDrawerContent
+import com.pi.recipeapp.ui.scaffold_components.RecipeTopAppBar
 import com.pi.recipeapp.ui.screens.DetailScreen
+import com.pi.recipeapp.ui.screens.imagesearch.RecipeImageSearchScreen
 import com.pi.recipeapp.ui.screens.main.MainScreen
 import com.pi.recipeapp.ui.screens.main.MainViewModel
 import com.pi.recipeapp.utils.Routes
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.getViewModel
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigator() {
     val navController = rememberNavController()
@@ -31,10 +33,15 @@ fun AppNavigator() {
 
     NavHost(navController = navController, startDestination = Routes.MainScreenRoute.route) {
         composable(Routes.MainScreenRoute.route) {
-            Scaffold(scaffoldState = scaffoldState, floatingActionButton = {
-                FloatingActionButton(onClick = {  }, modifier = Modifier.padding(8.dp)) {
-                    Icon(imageVector = Icons.Filled.PhotoCamera, contentDescription = "")
-                }
+
+            Scaffold(scaffoldState = scaffoldState, topBar = {
+                RecipeTopAppBar(coroutineScope = coroutineScope, scaffoldState = scaffoldState)
+            }, drawerContent = {
+                RecipeModalDrawerContent(navigateToTextSearchScreen = {
+                    navController.navigateThroughDrawer(Routes.MainScreenRoute.route, coroutineScope, scaffoldState)
+                }, navigateToImageSearchScreen = {
+                    navController.navigateThroughDrawer(Routes.RecipeImageSearchScreen.route, coroutineScope, scaffoldState)
+                })
             }) {
                 MainScreen(
                     provideSearchInput = { mainViewModel.recipeSearchInput },
@@ -50,9 +57,24 @@ fun AppNavigator() {
                         }
                     })
             }
+
+
         }
         composable(Routes.DetailScreenRoute.route) {
             DetailScreen(mainViewModel.currentRecipe)
+        }
+        composable(Routes.RecipeImageSearchScreen.route) {
+            Scaffold(scaffoldState = scaffoldState, topBar = {
+                RecipeTopAppBar(coroutineScope = coroutineScope, scaffoldState = scaffoldState)
+            }, drawerContent = {
+                RecipeModalDrawerContent(navigateToTextSearchScreen = {
+                    navController.navigateThroughDrawer(Routes.MainScreenRoute.route, coroutineScope, scaffoldState)
+                }, navigateToImageSearchScreen = {
+                    navController.navigateThroughDrawer(Routes.RecipeImageSearchScreen.route, coroutineScope, scaffoldState)
+                })
+            }) {
+                RecipeImageSearchScreen()
+            }
         }
     }
 }
