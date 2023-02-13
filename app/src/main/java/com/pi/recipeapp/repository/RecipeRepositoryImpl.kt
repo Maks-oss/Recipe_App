@@ -13,11 +13,11 @@ class RecipeRepositoryImpl(
 ) : RecipeRepository {
     private val TAG = "RecipeRepository"
     override suspend fun fetchMeals(query: String): Response<List<Recipe>> {
-        val recipesFromDb = recipesDao.getAllRecipes(query)
-        if (recipesFromDb.isNotEmpty()) {
-            Log.d(TAG, "Recipes from db")
-            return Response.Success(recipesFromDb.map(RecipesMapper::convertRecipeWithIngredientsToRecipe))
-        }
+//        val recipesFromDb = recipesDao.getAllRecipes(query)
+//        if (recipesFromDb.isNotEmpty()) {
+//            Log.d(TAG, "Recipes from db")
+//            return Response.Success(recipesFromDb.map(RecipesMapper::convertRecipeWithIngredientsToRecipe))
+//        }
         return try {
             val recipes = recipesService.getRecipesByNamesResponse(query)
             if (recipes.meals.isNullOrEmpty()) {
@@ -26,7 +26,7 @@ class RecipeRepositoryImpl(
             Log.d(TAG, "Recipes from server")
 
             val recipeList = RecipesMapper.convertRecipeDtoToDomain(recipes)
-            insertIntoDatabase(recipeList, query)
+//            insertIntoDatabase(recipeList, query)
             Response.Success(recipeList)
         } catch (exc: Exception) {
             Log.e(TAG,"fetchMeals: ${exc.message}")
@@ -57,8 +57,4 @@ class RecipeRepositoryImpl(
             recipesDao.insertIngredients(RecipesMapper.convertRecipeToIngredients(recipe))
         }
     }
-
-//    override suspend fun fetchMealsFromDatabase(query: String): Flow<Recipe> {
-//        return recipesDao.getAllRecipes(query).map(RecipesMapper::convertRecipeWithIngredientsToRecipe)
-//    }
 }

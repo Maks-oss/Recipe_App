@@ -12,30 +12,34 @@ import com.pi.recipeapp.utils.Response
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.properties.Delegates
 
 class MainViewModel(private val recipeRepository: RecipeRepository) :
     ViewModel() {
 
     var recipesState by mutableStateOf<UiState<List<Recipe>>>(UiState())
         private set
-//    var recipesFromDb by mutableStateOf<Flow<Recipe>>(emptyFlow())
-//        private set
 
-    var recipeSearchInput: String by mutableStateOf("")
+    var mainViewModelStates: MainViewModelStates by mutableStateOf(MainViewModelStates())
         private set
     private var job: Job? = null
     var currentRecipe: Recipe? by mutableStateOf(null)
 
     fun onRecipeSearchInputChange(value: String) {
         job?.cancel()
-        recipeSearchInput = value
+        mainViewModelStates = mainViewModelStates.copy(recipeSearchInput = value)
         if (value.isNotEmpty()) {
             job = viewModelScope.launch {
                 delay(2000)
                 fetchRecipes()
             }
         }
+    }
+
+    fun changeExpandListAtIndex(index: Int) {
+        val changedExpandedList = mainViewModelStates.isExpandedList.toMutableList().apply { 
+            this[index] = !this[index]
+        }
+        mainViewModelStates = mainViewModelStates.copy(isExpandedList = changedExpandedList)
     }
 
     fun fetchRecipe(name: String) {
@@ -50,7 +54,8 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
             isLoading = true,
             errorMessage = null
         )
-        val result = recipeRepository.fetchMeals(recipeSearchInput)
+        val result = recipeRepository.fetchMeals(mainViewModelStates.recipeSearchInput)
+        delay(1000)
         recipesState = when (result) {
             is Response.Success -> recipesState.copy(
                 data = result.data,

@@ -1,8 +1,8 @@
 package com.pi.recipeapp.mapper
 
 import com.pi.recipeapp.data.domain.Recipe
-import com.pi.recipeapp.koin.dto.Meal
-import com.pi.recipeapp.koin.dto.RecipeDto
+import com.pi.recipeapp.data.dto.Meal
+import com.pi.recipeapp.data.dto.RecipeDto
 import com.pi.recipeapp.room.entity.Ingredient
 import com.pi.recipeapp.room.entity.RecipeEntity
 import com.pi.recipeapp.room.entity.RecipeWithIngredients

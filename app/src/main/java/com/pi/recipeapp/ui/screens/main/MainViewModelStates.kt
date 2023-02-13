@@ -4,5 +4,5 @@ import kotlinx.coroutines.Job
 
 data class MainViewModelStates(
     val recipeSearchInput: String = "",
-    val job: Job? = null
+    val isExpandedList: List<Boolean> = List(2) { false },
 )

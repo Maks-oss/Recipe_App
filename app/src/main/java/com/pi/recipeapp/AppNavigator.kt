@@ -2,13 +2,8 @@ package com.pi.recipeapp
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -38,14 +33,22 @@ fun AppNavigator() {
                 RecipeTopAppBar(coroutineScope = coroutineScope, scaffoldState = scaffoldState)
             }, drawerContent = {
                 RecipeModalDrawerContent(navigateToTextSearchScreen = {
-                    navController.navigateThroughDrawer(Routes.MainScreenRoute.route, coroutineScope, scaffoldState)
+                    navController.navigateThroughDrawer(
+                        Routes.MainScreenRoute.route,
+                        coroutineScope,
+                        scaffoldState
+                    )
                 }, navigateToImageSearchScreen = {
-                    navController.navigateThroughDrawer(Routes.RecipeImageSearchScreen.route, coroutineScope, scaffoldState)
+                    navController.navigateThroughDrawer(
+                        Routes.RecipeImageSearchScreen.route,
+                        coroutineScope,
+                        scaffoldState
+                    )
                 })
             }) {
                 MainScreen(
-                    provideSearchInput = { mainViewModel.recipeSearchInput },
-                    provideRecipesState = { mainViewModel.recipesState },
+                    provideSearchInput = mainViewModel.mainViewModelStates::recipeSearchInput,
+                    provideRecipesState = mainViewModel::recipesState,
                     onSearchInputChange = mainViewModel::onRecipeSearchInputChange,
                     navigateToDetailScreen = { recipe ->
                         mainViewModel.currentRecipe = recipe
@@ -61,16 +64,24 @@ fun AppNavigator() {
 
         }
         composable(Routes.DetailScreenRoute.route) {
-            DetailScreen(mainViewModel.currentRecipe)
+            DetailScreen(mainViewModel.currentRecipe, onExpandClick = { index -> mainViewModel.changeExpandListAtIndex(index) }, provideExpandedList = mainViewModel.mainViewModelStates::isExpandedList)
         }
         composable(Routes.RecipeImageSearchScreen.route) {
             Scaffold(scaffoldState = scaffoldState, topBar = {
                 RecipeTopAppBar(coroutineScope = coroutineScope, scaffoldState = scaffoldState)
             }, drawerContent = {
                 RecipeModalDrawerContent(navigateToTextSearchScreen = {
-                    navController.navigateThroughDrawer(Routes.MainScreenRoute.route, coroutineScope, scaffoldState)
+                    navController.navigateThroughDrawer(
+                        Routes.MainScreenRoute.route,
+                        coroutineScope,
+                        scaffoldState
+                    )
                 }, navigateToImageSearchScreen = {
-                    navController.navigateThroughDrawer(Routes.RecipeImageSearchScreen.route, coroutineScope, scaffoldState)
+                    navController.navigateThroughDrawer(
+                        Routes.RecipeImageSearchScreen.route,
+                        coroutineScope,
+                        scaffoldState
+                    )
                 })
             }) {
                 RecipeImageSearchScreen { name ->

@@ -1,6 +1,5 @@
 package com.pi.recipeapp.ui.screens.main
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,12 +8,13 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.Icon
+import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -48,25 +48,20 @@ fun MainScreen(
         )
         Spacer(modifier = Modifier.padding(8.dp))
 
-        Crossfade(targetState = provideRecipesState) { provideState ->
-            val recipeState = provideState()
-            if (recipeState.isLoading) {
-                DisplayShimmerEffect()
-            }
-            recipeState.data?.let { recipes ->
-                if (recipes.isEmpty())
-                    showSnackbar(stringResource(id = R.string.empty_request_error))
-                else
-                    RecipeList(recipes, navigateToDetailScreen)
-            }
-            recipeState.errorMessage?.let { error ->
-                showSnackbar(error)
-            }
+        val recipeState = provideRecipesState()
+        if (recipeState.isLoading) {
+            DisplayShimmerEffect()
+        }
+        recipeState.data?.let { recipes ->
+            if (recipes.isEmpty())
+                showSnackbar(stringResource(id = R.string.empty_request_error))
+            else
+                RecipeList(recipes, navigateToDetailScreen)
+        }
+        recipeState.errorMessage?.let { error ->
+            showSnackbar(error)
         }
 
-//        FloatingActionButton(onClick = {  }, modifier = Modifier.weight(1f,false)) {
-//            Icon(imageVector = Icons.Filled.PhotoCamera, contentDescription = "")
-//        }
     }
 }
 
@@ -87,7 +82,6 @@ private fun RecipeTextField(recipeSearchInput: () -> String, onValueChange: (Str
 
 @Composable
 private fun RecipeList(recipes: List<Recipe>, onRecipeItemClick: (Recipe) -> Unit) {
-
     LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Fixed(2)) {
         items(recipes) {
             RecipeListItem(it, onRecipeItemClick)

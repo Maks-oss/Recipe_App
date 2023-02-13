@@ -1,4 +1,4 @@
-package com.pi.recipeapp.koin.dto
+package com.pi.recipeapp.data.dto
 
 data class Meal(
     val dateModified: Any,
