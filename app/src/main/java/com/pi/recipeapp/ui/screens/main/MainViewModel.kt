@@ -35,11 +35,9 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         }
     }
 
-    fun changeExpandListAtIndex(index: Int) {
-        val changedExpandedList = mainViewModelStates.isExpandedList.toMutableList().apply { 
-            this[index] = !this[index]
-        }
-        mainViewModelStates = mainViewModelStates.copy(isExpandedList = changedExpandedList)
+    fun changeExpandItem() {
+
+        mainViewModelStates = mainViewModelStates.copy(isExpanded = !mainViewModelStates.isExpanded)
     }
 
     fun fetchRecipe(name: String) {

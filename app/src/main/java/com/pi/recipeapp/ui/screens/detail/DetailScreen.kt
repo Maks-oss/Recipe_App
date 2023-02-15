@@ -1,15 +1,20 @@
 package com.pi.recipeapp.ui.screens
 
+import android.net.Uri
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
+import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -17,17 +22,20 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.google.accompanist.flowlayout.FlowRow
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.ui.animation.LoadingShimmerEffect
 import com.pi.recipeapp.ui.utils.CreateExpandedItem
 import com.pi.recipeapp.ui.utils.CustomSurface
 import com.pi.recipeapp.ui.utils.InstructionTabs
+import com.pi.recipeapp.ui.utils.VideoPlayer
 import com.pi.recipeapp.utils.InstructionTabsConstants
+import org.w3c.dom.Text
 
 @Composable
 fun DetailScreen(
     recipe: Recipe?,
-    provideExpandedList: () -> List<Boolean>,
+    provideExpandedList: () -> Boolean,
     onExpandClick: (index: Int) -> Unit
 ) {
     Column(
@@ -40,17 +48,15 @@ fun DetailScreen(
             provideExpandedList = provideExpandedList,
             onExpandClick = onExpandClick
         )
-        Instructions(recipe, provideExpandedList, onExpandClick)
+        Instructions(recipe)
     }
-
-//        Instructions(recipe, isExpanded[1], onExpandClick)
 }
 
 
 @Composable
 fun Detail(
     recipe: Recipe?,
-    provideExpandedList: () -> List<Boolean>,
+    provideExpandedList: () -> Boolean,
     onExpandClick: (index: Int) -> Unit
 ) {
     CustomSurface {
@@ -60,7 +66,14 @@ fun Detail(
             if (recipe != null) {
                 val isExpandedList = provideExpandedList()
                 Title(isExpandedList, recipe, onExpandClick)
-                Ingredients(recipe = recipe, isVisible = isExpandedList.first())
+                TextButton(onClick = {  }) {
+                    Row {
+                        Icon(imageVector = Icons.Outlined.Favorite, contentDescription = "")
+                        Spacer(modifier = Modifier.padding(8.dp))
+                        Text(text = "Add to favourites")
+                    }
+                }
+                Ingredients(recipe = recipe, isVisible = isExpandedList)
             }
         }
     }
@@ -68,28 +81,9 @@ fun Detail(
 
 @Composable
 private fun Instructions(
-    recipe: Recipe?,
-    provideExpandedList: () -> List<Boolean>,
-    onExpandClick: (index: Int) -> Unit
+    recipe: Recipe?
 ) {
     CustomSurface {
-//        val isExpandedList = provideExpandedList()
-//        Column {
-//            CreateExpandedItem(text = "Cooking instructions", isExpanded = isExpandedList[1]) {
-//                onExpandClick(1)
-//            }
-//            OutlinedButton(onClick = { /*TODO*/ }, modifier = Modifier.padding(8.dp)) {
-//                Text(text = "Show video instruction")
-//            }
-//            if (recipe != null) {
-//                AnimatedVisibility(visible = isExpandedList[1]) {
-//                    Text(text = recipe.instruction, style = MaterialTheme.typography.body1, modifier = Modifier.padding(8.dp))
-//                }
-//            }
-//        }
-//        Tab(selected = , onClick = { /*TODO*/ }) {
-//
-//        }
         var tabsState by remember {
             mutableStateOf(0)
         }
@@ -99,18 +93,17 @@ private fun Instructions(
             ) { index ->
                 tabsState = index
             }
-            when (tabsState) {
-                InstructionTabsConstants.TEXT_INSTRUCTION -> Text(
-                    text = recipe?.instruction ?: "",
-                    style = MaterialTheme.typography.body1,
-                    modifier = Modifier.padding(8.dp)
-                )
-                InstructionTabsConstants.VIDEO_INSTRUCTION -> Text(
-                    text = "Video Instruction",
-                    style = MaterialTheme.typography.body1,
-                    modifier = Modifier.padding(8.dp)
-                )
+            Crossfade(targetState = tabsState) { tabsState ->
+                when (tabsState) {
+                    InstructionTabsConstants.TEXT_INSTRUCTION -> Text(
+                        text = recipe?.instruction ?: "",
+                        style = MaterialTheme.typography.body1,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                    InstructionTabsConstants.VIDEO_INSTRUCTION -> if (!recipe?.videoLink.isNullOrEmpty()) VideoPlayer(uri = recipe?.videoLink, modifier = Modifier.fillMaxSize())
+                }
             }
+
         }
 
     }
@@ -140,11 +133,11 @@ private fun RecipeImage(recipe: Recipe?) {
 
 @Composable
 private fun Title(
-    isExpandedList: List<Boolean>,
+    isExpanded: Boolean,
     recipe: Recipe,
     onExpandClick: (index: Int) -> Unit
 ) {
-    CreateExpandedItem(text = recipe.name, isExpanded = isExpandedList.first()) {
+    CreateExpandedItem(text = recipe.name, isExpanded = isExpanded) {
         onExpandClick(0)
     }
 }
@@ -153,39 +146,43 @@ private fun Title(
 private fun Ingredients(recipe: Recipe, isVisible: Boolean) {
     val ingredients = recipe.ingredients
     AnimatedVisibility(visible = isVisible) {
-        LazyColumn(Modifier.padding(8.dp)) {
+        FlowRow(
+            Modifier
+                .padding(8.dp)
+        ) {
             for ((ingredient, measure) in ingredients) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        val painter = rememberAsyncImagePainter(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data("https://www.themealdb.com/images/ingredients/${ingredient}.png")
-                                .crossfade(true)
-                                .build(),
-                        )
-                        Image(
-                            painter = painter,
-                            contentScale = ContentScale.Crop,
-                            contentDescription = "",
-                            modifier = Modifier
-                                .height(50.dp)
-                        )
-                        Text(
-                            text = ingredient,
-                            modifier = Modifier.padding(8.dp),
-                            style = MaterialTheme.typography.subtitle1
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            text = measure, modifier = Modifier
-                                .padding(8.dp), style = MaterialTheme.typography.subtitle1
-                        )
-                    }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val painter = rememberAsyncImagePainter(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data("https://www.themealdb.com/images/ingredients/${ingredient}.png")
+                            .crossfade(true)
+                            .build(),
+                    )
+
+                    Image(
+                        painter = painter,
+                        contentScale = ContentScale.Crop,
+                        contentDescription = "",
+                        modifier = Modifier
+                            .size(50.dp)
+                    )
+                    Text(
+                        text = ingredient,
+                        modifier = Modifier.padding(8.dp),
+                        style = MaterialTheme.typography.subtitle1
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = measure, modifier = Modifier
+                            .padding(8.dp), style = MaterialTheme.typography.subtitle1
+                    )
                 }
             }
+
         }
     }
 }

@@ -30,7 +30,7 @@ fun CreateExpandedItem(text: String, isExpanded: Boolean, onExpandClick: () -> U
             style = MaterialTheme.typography.h6,
             modifier = Modifier.onGloballyPositioned {
                 textHeight = it.size.height
-            })
+            }, overflow = TextOverflow.Ellipsis)
         Icon(
             imageVector = if (!isExpanded) Icons.Filled.ExpandMore else Icons.Filled.ExpandLess,
             contentDescription = "",

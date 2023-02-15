@@ -64,7 +64,13 @@ fun AppNavigator() {
 
         }
         composable(Routes.DetailScreenRoute.route) {
-            DetailScreen(mainViewModel.currentRecipe, onExpandClick = { index -> mainViewModel.changeExpandListAtIndex(index) }, provideExpandedList = mainViewModel.mainViewModelStates::isExpandedList)
+
+            DetailScreen(
+                mainViewModel.currentRecipe,
+                onExpandClick = { mainViewModel.changeExpandItem() },
+                provideExpandedList = mainViewModel.mainViewModelStates::isExpanded
+            )
+
         }
         composable(Routes.RecipeImageSearchScreen.route) {
             Scaffold(scaffoldState = scaffoldState, topBar = {
