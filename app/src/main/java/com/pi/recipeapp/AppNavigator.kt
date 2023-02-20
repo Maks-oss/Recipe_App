@@ -1,9 +1,9 @@
 package com.pi.recipeapp
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.material.Scaffold
+import androidx.compose.material.rememberScaffoldState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -18,7 +18,6 @@ import com.pi.recipeapp.utils.Routes
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.getViewModel
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigator() {
     val navController = rememberNavController()
@@ -48,7 +47,7 @@ fun AppNavigator() {
             }) {
                 MainScreen(
                     provideSearchInput = mainViewModel.mainViewModelStates::recipeSearchInput,
-                    provideRecipesState = mainViewModel::recipesState,
+                    provideRecipesState = mainViewModel::recipesTextSearchState,
                     onSearchInputChange = mainViewModel::onRecipeSearchInputChange,
                     navigateToDetailScreen = { recipe ->
                         mainViewModel.currentRecipe = recipe
@@ -67,7 +66,7 @@ fun AppNavigator() {
 
             DetailScreen(
                 mainViewModel.currentRecipe,
-                onExpandClick = { mainViewModel.changeExpandItem() },
+                onExpandClick = mainViewModel::changeExpandItem,
                 provideExpandedList = mainViewModel.mainViewModelStates::isExpanded
             )
 
@@ -90,10 +89,18 @@ fun AppNavigator() {
                     )
                 })
             }) {
-                RecipeImageSearchScreen { name ->
-                    mainViewModel.fetchRecipe(name)
-                    navController.navigate(Routes.DetailScreenRoute.route)
-                }
+                RecipeImageSearchScreen(
+                    provideRecipesImageSearchState = mainViewModel::recipesImageSearchState,
+                    imageSearchStates = mainViewModel.imageSearchStates,
+                    changeImageBitmap = { mainViewModel.changeImageSearchBitmap(it) },
+                    changeRecipeName = { mainViewModel.changeImageSearchRecipeName(it) },
+                    navigateToDetailScreen = { recipe ->
+                        mainViewModel.currentRecipe = recipe
+                        navController.navigate(Routes.DetailScreenRoute.route)
+                    },
+                    loadRecipes = { name ->
+                        mainViewModel.fetchImageRecipesSearch(name)
+                    })
             }
         }
     }

@@ -36,7 +36,7 @@ import org.w3c.dom.Text
 fun DetailScreen(
     recipe: Recipe?,
     provideExpandedList: () -> Boolean,
-    onExpandClick: (index: Int) -> Unit
+    onExpandClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -57,7 +57,7 @@ fun DetailScreen(
 fun Detail(
     recipe: Recipe?,
     provideExpandedList: () -> Boolean,
-    onExpandClick: (index: Int) -> Unit
+    onExpandClick: () -> Unit
 ) {
     CustomSurface {
 
@@ -117,9 +117,6 @@ private fun RecipeImage(recipe: Recipe?) {
             .data(recipe?.imageUrl)
             .build(),
     )
-    if (painter.state is AsyncImagePainter.State.Loading || recipe?.imageUrl == null) {
-        LoadingShimmerEffect(300.dp)
-    }
 
     Image(
         painter = painter,
@@ -135,10 +132,10 @@ private fun RecipeImage(recipe: Recipe?) {
 private fun Title(
     isExpanded: Boolean,
     recipe: Recipe,
-    onExpandClick: (index: Int) -> Unit
+    onExpandClick: () -> Unit
 ) {
     CreateExpandedItem(text = recipe.name, isExpanded = isExpanded) {
-        onExpandClick(0)
+        onExpandClick()
     }
 }
 
