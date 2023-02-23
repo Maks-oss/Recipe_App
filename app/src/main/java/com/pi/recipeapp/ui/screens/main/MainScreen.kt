@@ -70,7 +70,7 @@ private fun RecipeTextField(recipeSearchInput: () -> String, onValueChange: (Str
     OutlinedTextField(
         value = recipeSearchInput(),
         onValueChange = onValueChange,
-        label = { Text(text = "Enter ingredient...") },
+        label = { Text(text = "Enter name...") },
         leadingIcon = {
             Icon(imageVector = Icons.Filled.Search, contentDescription = "recipe search")
         },

@@ -7,6 +7,7 @@ import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.repository.RecipeRepositoryImpl
 import com.pi.recipeapp.retrofit.RetrofitClient
 import com.pi.recipeapp.room.RecipesDatabase
+import com.pi.recipeapp.ui.screens.build.BuildRecipeViewModel
 import com.pi.recipeapp.ui.screens.main.MainViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,4 +39,5 @@ val repositoryModule = module {
 }
 val viewModelModule = module {
     viewModel { MainViewModel(get()) }
+    viewModel { BuildRecipeViewModel() }
 }

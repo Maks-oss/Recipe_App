@@ -1,6 +1,5 @@
 package com.pi.recipeapp.ui.utils
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CutCornerShape
@@ -12,15 +11,16 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 
@@ -39,7 +39,8 @@ fun CreateExpandedItem(text: String, isExpanded: Boolean, onExpandClick: () -> U
             style = MaterialTheme.typography.h6,
             modifier = Modifier.onGloballyPositioned {
                 textHeight = it.size.height
-            }, overflow = TextOverflow.Ellipsis)
+            }, overflow = TextOverflow.Ellipsis
+        )
         Icon(
             imageVector = if (!isExpanded) Icons.Filled.ExpandMore else Icons.Filled.ExpandLess,
             contentDescription = "",
@@ -51,30 +52,74 @@ fun CreateExpandedItem(text: String, isExpanded: Boolean, onExpandClick: () -> U
 }
 
 @Composable
-fun CustomSurface(content: @Composable () -> Unit) {
+fun CustomSurface(shape: Shape = CutCornerShape(16.dp), content: @Composable () -> Unit) {
     Surface(
-        shape = CutCornerShape(16.dp), modifier = Modifier
-            .padding(8.dp)
-            .fillMaxWidth(), elevation = 1.dp
+        shape = shape, modifier =  Modifier.padding(8.dp).fillMaxWidth(), elevation = 1.dp
+    ) {
+        content()
+    }
+}
+@Composable
+fun CustomSurface(modifier: Modifier = Modifier,shape: Shape = CutCornerShape(16.dp), content: @Composable () -> Unit) {
+    Surface(
+        shape = shape, modifier =  modifier, elevation = 1.dp
     ) {
         content()
     }
 }
 
 @Composable
-fun InstructionTabs(state: Int, onTabClick: (index: Int) -> Unit) {
-    val titles = listOf("Text instruction", "Video instruction")
-    TabRow(selectedTabIndex = state, backgroundColor = MaterialTheme.colors.surface, contentColor = MaterialTheme.colors.primary) {
+fun CustomTabs(titles: List<String>, state: Int, onTabClick: (index: Int) -> Unit) {
+//    val titles = listOf("Text instruction", "Video instruction")
+    TabRow(
+        selectedTabIndex = state,
+        backgroundColor = MaterialTheme.colors.surface,
+        contentColor = MaterialTheme.colors.primary
+    ) {
         titles.forEachIndexed { index, title ->
             Tab(
                 selected = state == index,
                 onClick = {
                     onTabClick(index)
                 },
-                text = { Text(text = title, maxLines = 2, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colors.onSurface) }
+                text = {
+                    Text(
+                        text = title,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colors.onSurface
+                    )
+                }
             )
         }
     }
+}
+
+@Composable
+fun BlankTextField(
+    text: String,
+    label: String,
+    textStyle: TextStyle,
+    onTextChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    maxLines: Int = 1
+) {
+    TextField(
+        value = text,
+        onValueChange = { onTextChange(it) },
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            unfocusedBorderColor = MaterialTheme.colors.surface,
+            focusedBorderColor = MaterialTheme.colors.surface
+        ),
+        modifier = modifier,
+        maxLines = maxLines,
+        textStyle = textStyle,
+        label = {
+            Text(
+                text = label,
+            )
+        },
+    )
 }
 
 @Composable

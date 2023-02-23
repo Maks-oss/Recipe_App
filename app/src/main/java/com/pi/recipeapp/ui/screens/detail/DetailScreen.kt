@@ -1,42 +1,38 @@
 package com.pi.recipeapp.ui.screens
 
-import android.net.Uri
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.google.accompanist.flowlayout.FlowRow
 import com.pi.recipeapp.data.domain.Recipe
-import com.pi.recipeapp.ui.animation.LoadingShimmerEffect
 import com.pi.recipeapp.ui.utils.CreateExpandedItem
 import com.pi.recipeapp.ui.utils.CustomSurface
-import com.pi.recipeapp.ui.utils.InstructionTabs
+import com.pi.recipeapp.ui.utils.CustomTabs
 import com.pi.recipeapp.ui.utils.VideoPlayer
 import com.pi.recipeapp.utils.InstructionTabsConstants
-import org.w3c.dom.Text
 
 @Composable
 fun DetailScreen(
     recipe: Recipe?,
-    provideExpandedList: () -> Boolean,
-    onExpandClick: () -> Unit
+    provideExpandedValue: () -> Boolean,
+    onExpandClick: () -> Unit,
+    isPreview: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -45,10 +41,37 @@ fun DetailScreen(
     ) {
         Detail(
             recipe = recipe,
-            provideExpandedList = provideExpandedList,
-            onExpandClick = onExpandClick
+            provideExpandedValue = provideExpandedValue,
+            onExpandClick = onExpandClick,
+            isPreview = isPreview
         )
         Instructions(recipe)
+
+    }
+}
+
+@Composable
+fun RecipeDetailPreview(
+    recipe: Recipe?,
+    provideExpandedValue: () -> Boolean,
+    onExpandClick: () -> Unit,
+    onConfirmClick: () -> Unit
+) {
+    Column {
+        Detail(
+            recipe = recipe,
+            provideExpandedValue = provideExpandedValue,
+            onExpandClick = onExpandClick,
+            isPreview = true
+        )
+        OutlinedButton(
+            onClick = onConfirmClick,
+            Modifier.padding(8.dp),
+            shape = CircleShape,
+            border = BorderStroke(1.dp, MaterialTheme.colors.primary)
+        ) {
+            Text(text = "Confirm")
+        }
     }
 }
 
@@ -56,21 +79,24 @@ fun DetailScreen(
 @Composable
 fun Detail(
     recipe: Recipe?,
-    provideExpandedList: () -> Boolean,
-    onExpandClick: () -> Unit
+    provideExpandedValue: () -> Boolean,
+    onExpandClick: () -> Unit,
+    isPreview: Boolean = false
 ) {
     CustomSurface {
 
         Column {
             RecipeImage(recipe)
             if (recipe != null) {
-                val isExpandedList = provideExpandedList()
+                val isExpandedList = provideExpandedValue()
                 Title(isExpandedList, recipe, onExpandClick)
-                TextButton(onClick = {  }) {
-                    Row {
-                        Icon(imageVector = Icons.Outlined.Favorite, contentDescription = "")
-                        Spacer(modifier = Modifier.padding(8.dp))
-                        Text(text = "Add to favourites")
+                if (!isPreview) {
+                    TextButton(onClick = { }) {
+                        Row {
+                            Icon(imageVector = Icons.Outlined.Favorite, contentDescription = "")
+                            Spacer(modifier = Modifier.padding(8.dp))
+                            Text(text = "Add to favourites")
+                        }
                     }
                 }
                 Ingredients(recipe = recipe, isVisible = isExpandedList)
@@ -88,7 +114,8 @@ private fun Instructions(
             mutableStateOf(0)
         }
         Column {
-            InstructionTabs(
+            CustomTabs(
+                titles = listOf("Text Instruction", "Video Instruction"),
                 state = tabsState
             ) { index ->
                 tabsState = index
@@ -100,7 +127,10 @@ private fun Instructions(
                         style = MaterialTheme.typography.body1,
                         modifier = Modifier.padding(8.dp)
                     )
-                    InstructionTabsConstants.VIDEO_INSTRUCTION -> if (!recipe?.videoLink.isNullOrEmpty()) VideoPlayer(uri = recipe?.videoLink, modifier = Modifier.fillMaxSize())
+                    InstructionTabsConstants.VIDEO_INSTRUCTION -> if (!recipe?.videoLink.isNullOrEmpty()) VideoPlayer(
+                        uri = recipe?.videoLink,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
             }
 
