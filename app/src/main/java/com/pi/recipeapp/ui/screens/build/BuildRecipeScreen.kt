@@ -17,6 +17,8 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -33,6 +35,7 @@ import com.pi.recipeapp.ui.screens.RecipeDetailPreview
 import com.pi.recipeapp.ui.utils.BlankTextField
 import com.pi.recipeapp.ui.utils.CustomSurface
 import com.pi.recipeapp.ui.utils.CustomTabs
+import com.pi.recipeapp.utils.AppConstants
 import com.pi.recipeapp.utils.InstructionTabsConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -61,6 +64,7 @@ fun BuildRecipeScreen(
         confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded },
     )
     val coroutineScope = rememberCoroutineScope()
+
     RecipeModalBottomSheet(sheetContent = {
         RecipeDetailPreview(
             recipe = buildRecipeStates.recipe,
@@ -71,6 +75,7 @@ fun BuildRecipeScreen(
                     modalSheetState.hide()
                 }
                 onConfirmClick()
+
             }
         )
     }, modalSheetState = modalSheetState) {
@@ -113,7 +118,11 @@ private fun RecipeBuilder(
     var tabsState by remember {
         mutableStateOf(0)
     }
-
+    val isErrorList = MutableList(4) {
+        remember {
+            mutableStateOf(false)
+        }
+    }
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
@@ -127,6 +136,7 @@ private fun RecipeBuilder(
             })
         AddImageAndTitle(
             buildRecipeStates.recipeName,
+            isError = isErrorList.first().value || isErrorList[1].value,
             onTextChange = { onIngredientTextChange(it) },
             imageBitmap = buildRecipeStates.imageBitmap,
             onImageChange = onRecipeImageChange,
@@ -135,6 +145,7 @@ private fun RecipeBuilder(
         AddIngredients(
             buildRecipeStates.ingredients,
             buildRecipeStates.measures,
+            isErrorList[2].value,
             onIngredientsAndMeasuresAdd,
             onIngredientChange,
             onMeasureChange,
@@ -143,6 +154,7 @@ private fun RecipeBuilder(
         AddInstructions(
             buildRecipeStates.textInstruction,
             buildRecipeStates.videoInstruction,
+            isErrorList.last().value,
             onTextInstructionChange,
             onVideoInstructionChange
         )
@@ -151,11 +163,17 @@ private fun RecipeBuilder(
                 val recipe = Recipe(
                     id = buildRecipeStates.recipeName.hashCode().toString(),
                     name = buildRecipeStates.recipeName,
-                    imageUrl = buildRecipeStates.imageUri!!,
+                    imageUrl = buildRecipeStates.imageUri ?: AppConstants.IMAGE_NOT_FOUND_URL,
                     instruction = buildRecipeStates.textInstruction,
                     videoLink = buildRecipeStates.videoInstruction,
-                    ingredients = buildRecipeStates.ingredients.zip(buildRecipeStates.measures).toMap(),
+                    ingredients = buildRecipeStates.ingredients.zip(buildRecipeStates.measures)
+                        .toMap(),
                 )
+                isErrorList[0].value = buildRecipeStates.recipeName.isEmpty()
+                isErrorList[1].value = buildRecipeStates.imageUri.isNullOrEmpty()
+                isErrorList[2].value = buildRecipeStates.ingredients.isEmpty()
+                isErrorList[3].value = buildRecipeStates.textInstruction.isEmpty()
+                if (isErrorList.find { error -> error.value } != null) return@OutlinedButton
                 applyRecipe(recipe)
                 coroutineScope.showModalSheetState(modalSheetState)
             },
@@ -177,6 +195,7 @@ private fun RecipeBuilder(
 @Composable
 private fun AddImageAndTitle(
     text: String,
+    isError: Boolean,
     imageBitmap: Bitmap?,
     getBitmapUri: (Uri) -> Unit,
     onTextChange: (String) -> Unit,
@@ -197,7 +216,10 @@ private fun AddImageAndTitle(
 
             }
         }
-    CustomSurface {
+    CustomSurfaceWithErrorMessage(
+        errorMessage = "Image and title cannot be null or empty",
+        isError = isError
+    ) {
         Column {
             Image(
                 painter = if (imageBitmap != null) rememberAsyncImagePainter(
@@ -233,18 +255,17 @@ private fun AddImageAndTitle(
 private fun AddIngredients(
     ingredients: List<String>,
     measures: List<String>,
+    isError: Boolean,
     onIngredientsAndMeasuresAdd: (value: String) -> Unit,
     onIngredientChange: (index: Int, String) -> Unit,
     onMeasureChange: (index: Int, String) -> Unit,
     onIngredientsAndMeasuresRemove: (index: Int) -> Unit,
 ) {
-//    val ingredients = remember {
-//        mutableStateListOf<String>()
-//    }
-//    val measures = remember {
-//        mutableStateListOf<String>()
-//    }
-    CustomSurface(shape = CutCornerShape(topEnd = 16.dp, topStart = 16.dp)) {
+    CustomSurfaceWithErrorMessage(
+        shape = CutCornerShape(topEnd = 16.dp, topStart = 16.dp),
+        errorMessage = "At least 1 ingredient should be specified",
+        isError = isError
+    ) {
         Column {
             TextButton(
                 onClick = {
@@ -302,23 +323,14 @@ private fun AddIngredients(
 private fun AddInstructions(
     textInstruction: String,
     videoInstruction: String,
+    isError: Boolean,
     onTextInstructionChange: (String) -> Unit,
     onVideoInstructionChange: (String) -> Unit
 ) {
-//    var textInstruction by remember {
-//        mutableStateOf("")
-//    }
-//    var videoInstruction by remember {
-//        mutableStateOf("")
-//    }
     var tabs by remember {
         mutableStateOf(0)
     }
-    CustomSurface(
-        modifier = Modifier
-            .padding(8.dp)
-            .fillMaxSize()
-    ) {
+    CustomSurfaceWithErrorMessage(errorMessage = "Text instruction should not be empty", isError = isError) {
         Column(Modifier.padding(8.dp)) {
             CustomTabs(
                 titles = listOf("Text Instruction", "Video Instruction (optional)"),
@@ -347,6 +359,32 @@ private fun AddInstructions(
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun CustomSurfaceWithErrorMessage(
+    errorMessage: String,
+    isError: Boolean,
+    shape: Shape = CutCornerShape(16.dp),
+    content: @Composable () -> Unit
+) {
+    if (isError) {
+        Column {
+            CustomSurface(borderStroke = BorderStroke(1.dp, Color.Red), shape = shape) {
+                content()
+            }
+            Text(
+                text = errorMessage,
+                style = MaterialTheme.typography.caption,
+                modifier = Modifier.padding(horizontal = 8.dp),
+                color = Color.Red
+            )
+        }
+    } else {
+        CustomSurface(shape) {
+            content()
         }
     }
 }

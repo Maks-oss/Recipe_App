@@ -1,5 +1,6 @@
 package com.pi.recipeapp.ui.utils
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CutCornerShape
@@ -52,17 +53,30 @@ fun CreateExpandedItem(text: String, isExpanded: Boolean, onExpandClick: () -> U
 }
 
 @Composable
-fun CustomSurface(shape: Shape = CutCornerShape(16.dp), content: @Composable () -> Unit) {
+fun CustomSurface(
+    shape: Shape = CutCornerShape(16.dp),
+    borderStroke: BorderStroke? = null,
+    content: @Composable () -> Unit
+) {
     Surface(
-        shape = shape, modifier =  Modifier.padding(8.dp).fillMaxWidth(), elevation = 1.dp
+        shape = shape, modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth(), elevation = 1.dp,
+        border = borderStroke
     ) {
         content()
     }
 }
+
 @Composable
-fun CustomSurface(modifier: Modifier = Modifier,shape: Shape = CutCornerShape(16.dp), content: @Composable () -> Unit) {
+fun CustomSurface(
+    modifier: Modifier = Modifier,
+    borderStroke: BorderStroke? = null,
+    shape: Shape = CutCornerShape(16.dp),
+    content: @Composable () -> Unit
+) {
     Surface(
-        shape = shape, modifier =  modifier, elevation = 1.dp
+        shape = shape, modifier = modifier, elevation = 1.dp, border = borderStroke
     ) {
         content()
     }
