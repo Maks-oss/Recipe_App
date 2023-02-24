@@ -24,8 +24,8 @@ class BuildRecipeViewModel: ViewModel() {
         buildRecipeStates = buildRecipeStates.copy(recipe = recipe)
     }
 
-    fun changeExpanded(isExpanded: Boolean = false) {
-        buildRecipeStates = buildRecipeStates.copy(isExpanded = isExpanded)
+    fun changeExpanded() {
+        buildRecipeStates = buildRecipeStates.copy(isExpanded = !buildRecipeStates.isExpanded)
     }
 
     fun changeImageBitmap(bitmap: Bitmap?) {

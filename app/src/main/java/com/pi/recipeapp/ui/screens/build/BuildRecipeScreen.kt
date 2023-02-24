@@ -37,6 +37,7 @@ import com.pi.recipeapp.ui.utils.CustomSurface
 import com.pi.recipeapp.ui.utils.CustomTabs
 import com.pi.recipeapp.utils.AppConstants
 import com.pi.recipeapp.utils.InstructionTabsConstants
+import com.pi.recipeapp.utils.RecipeBuilderTabsConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -64,7 +65,9 @@ fun BuildRecipeScreen(
         confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded },
     )
     val coroutineScope = rememberCoroutineScope()
-
+    var tabsState by remember {
+        mutableStateOf(0)
+    }
     RecipeModalBottomSheet(sheetContent = {
         RecipeDetailPreview(
             recipe = buildRecipeStates.recipe,
@@ -79,28 +82,43 @@ fun BuildRecipeScreen(
             }
         )
     }, modalSheetState = modalSheetState) {
-        RecipeBuilder(
-            coroutineScope,
-            buildRecipeStates,
-            modalSheetState,
-            applyRecipe,
-            onRecipeNameTextChange,
-            onRecipeUriChange,
-            onRecipeImageChange,
-            onIngredientsAndMeasuresAdd,
-            onIngredientChange,
-            onMeasureChange,
-            onIngredientsAndMeasuresRemove,
-            onTextInstructionChange,
-            onVideoInstructionChange
-        )
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .fillMaxSize()
+        ) {
+            CustomTabs(
+                titles = listOf("Create own recipe", "Generate recipe"),
+                state = tabsState,
+                onTabClick = { index ->
+                    tabsState = index
+                })
+            when (tabsState) {
+                RecipeBuilderTabsConstants.OWN_RECIPE -> RecipeBuilder(
+                    coroutineScope,
+                    buildRecipeStates,
+                    modalSheetState,
+                    applyRecipe,
+                    onRecipeNameTextChange,
+                    onRecipeUriChange,
+                    onRecipeImageChange,
+                    onIngredientsAndMeasuresAdd,
+                    onIngredientChange,
+                    onMeasureChange,
+                    onIngredientsAndMeasuresRemove,
+                    onTextInstructionChange,
+                    onVideoInstructionChange
+                )
+                RecipeBuilderTabsConstants.GENERATED_RECIPE -> Text(text = "Generated Recipe")
+            }
+        }
     }
 
 }
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun RecipeBuilder(
+private fun ColumnScope.RecipeBuilder(
     coroutineScope: CoroutineScope,
     buildRecipeStates: BuildRecipeStates,
     modalSheetState: ModalBottomSheetState,
@@ -115,81 +133,68 @@ private fun RecipeBuilder(
     onTextInstructionChange: (String) -> Unit,
     onVideoInstructionChange: (String) -> Unit
 ) {
-    var tabsState by remember {
-        mutableStateOf(0)
-    }
-    val isErrorList = MutableList(4) {
+    val isErrorList = MutableList(5) {
         remember {
             mutableStateOf(false)
         }
     }
-    Column(
+    AddImageAndTitle(
+        buildRecipeStates.recipeName,
+        isError = isErrorList.first().value || isErrorList[1].value,
+        onTextChange = { onIngredientTextChange(it) },
+        imageBitmap = buildRecipeStates.imageBitmap,
+        onImageChange = onRecipeImageChange,
+        getBitmapUri = { onRecipeUriChange(it.toString()) }
+    )
+    AddIngredients(
+        buildRecipeStates.ingredients,
+        buildRecipeStates.measures,
+        isErrorList[2].value || isErrorList[3].value,
+        onIngredientsAndMeasuresAdd,
+        onIngredientChange,
+        onMeasureChange,
+        onIngredientsAndMeasuresRemove
+    )
+    AddInstructions(
+        buildRecipeStates.textInstruction,
+        buildRecipeStates.videoInstruction,
+        isErrorList.last().value,
+        onTextInstructionChange,
+        onVideoInstructionChange
+    )
+    OutlinedButton(
+        onClick = {
+            val recipe = Recipe(
+                id = buildRecipeStates.recipeName.hashCode().toString(),
+                name = buildRecipeStates.recipeName,
+                imageUrl = buildRecipeStates.imageUri ?: AppConstants.IMAGE_NOT_FOUND_URL,
+                instruction = buildRecipeStates.textInstruction,
+                videoLink = buildRecipeStates.videoInstruction,
+                ingredients = buildRecipeStates.ingredients.zip(buildRecipeStates.measures)
+                    .toMap(),
+            )
+            isErrorList[0].value = buildRecipeStates.recipeName.isEmpty()
+            isErrorList[1].value = buildRecipeStates.imageUri.isNullOrEmpty()
+            isErrorList[2].value = buildRecipeStates.ingredients.isEmpty()
+            isErrorList[3].value = buildRecipeStates.measures.isEmpty()
+            isErrorList[4].value = buildRecipeStates.textInstruction.isEmpty()
+            if (isErrorList.find { error -> error.value } != null) return@OutlinedButton
+            applyRecipe(recipe)
+            coroutineScope.showModalSheetState(modalSheetState)
+        },
         modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .fillMaxSize()
+            .align(Alignment.End)
+            .padding(8.dp),
+        shape = CircleShape,
+        border = BorderStroke(1.dp, MaterialTheme.colors.primary)
     ) {
-        CustomTabs(
-            titles = listOf("Create own recipe", "Generate recipe"),
-            state = tabsState,
-            onTabClick = { index ->
-                tabsState = index
-            })
-        AddImageAndTitle(
-            buildRecipeStates.recipeName,
-            isError = isErrorList.first().value || isErrorList[1].value,
-            onTextChange = { onIngredientTextChange(it) },
-            imageBitmap = buildRecipeStates.imageBitmap,
-            onImageChange = onRecipeImageChange,
-            getBitmapUri = { onRecipeUriChange(it.toString()) }
-        )
-        AddIngredients(
-            buildRecipeStates.ingredients,
-            buildRecipeStates.measures,
-            isErrorList[2].value,
-            onIngredientsAndMeasuresAdd,
-            onIngredientChange,
-            onMeasureChange,
-            onIngredientsAndMeasuresRemove
-        )
-        AddInstructions(
-            buildRecipeStates.textInstruction,
-            buildRecipeStates.videoInstruction,
-            isErrorList.last().value,
-            onTextInstructionChange,
-            onVideoInstructionChange
-        )
-        OutlinedButton(
-            onClick = {
-                val recipe = Recipe(
-                    id = buildRecipeStates.recipeName.hashCode().toString(),
-                    name = buildRecipeStates.recipeName,
-                    imageUrl = buildRecipeStates.imageUri ?: AppConstants.IMAGE_NOT_FOUND_URL,
-                    instruction = buildRecipeStates.textInstruction,
-                    videoLink = buildRecipeStates.videoInstruction,
-                    ingredients = buildRecipeStates.ingredients.zip(buildRecipeStates.measures)
-                        .toMap(),
-                )
-                isErrorList[0].value = buildRecipeStates.recipeName.isEmpty()
-                isErrorList[1].value = buildRecipeStates.imageUri.isNullOrEmpty()
-                isErrorList[2].value = buildRecipeStates.ingredients.isEmpty()
-                isErrorList[3].value = buildRecipeStates.textInstruction.isEmpty()
-                if (isErrorList.find { error -> error.value } != null) return@OutlinedButton
-                applyRecipe(recipe)
-                coroutineScope.showModalSheetState(modalSheetState)
-            },
-            modifier = Modifier
-                .align(Alignment.End)
-                .padding(8.dp),
-            shape = CircleShape,
-            border = BorderStroke(1.dp, MaterialTheme.colors.primary)
-        ) {
-            Row {
-                Icon(imageVector = Icons.Outlined.Edit, contentDescription = "")
-                Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                Text(text = "Create recipe", modifier = Modifier.align(Alignment.CenterVertically))
-            }
+        Row {
+            Icon(imageVector = Icons.Outlined.Edit, contentDescription = "")
+            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+            Text(text = "Create recipe", modifier = Modifier.align(Alignment.CenterVertically))
         }
     }
+
 }
 
 @Composable
@@ -330,7 +335,10 @@ private fun AddInstructions(
     var tabs by remember {
         mutableStateOf(0)
     }
-    CustomSurfaceWithErrorMessage(errorMessage = "Text instruction should not be empty", isError = isError) {
+    CustomSurfaceWithErrorMessage(
+        errorMessage = "Text instruction should not be empty",
+        isError = isError
+    ) {
         Column(Modifier.padding(8.dp)) {
             CustomTabs(
                 titles = listOf("Text Instruction", "Video Instruction (optional)"),
