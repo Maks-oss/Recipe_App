@@ -51,6 +51,13 @@ class RecipeRepositoryImpl(
         }
     }
 
+    override suspend fun fetchCategories(): List<String> {
+        return RecipesMapper.convertCategoriesToStringList(recipesService.getCategoriesResponse())
+    }
+    override suspend fun fetchIngredients(): List<String> {
+        return RecipesMapper.convertIngredientsToStringList(recipesService.getIngredientsResponse())
+    }
+
     private suspend fun insertIntoDatabase(recipeList: List<Recipe>, query: String) {
         recipeList.forEach { recipe ->
             recipesDao.insertRecipe(RecipesMapper.convertRecipetoRecipeEntity(recipe, query))

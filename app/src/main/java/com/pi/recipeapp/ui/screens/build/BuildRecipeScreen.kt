@@ -37,7 +37,6 @@ import com.pi.recipeapp.ui.utils.CustomSurface
 import com.pi.recipeapp.ui.utils.CustomTabs
 import com.pi.recipeapp.utils.AppConstants
 import com.pi.recipeapp.utils.InstructionTabsConstants
-import com.pi.recipeapp.utils.RecipeBuilderTabsConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -65,9 +64,6 @@ fun BuildRecipeScreen(
         confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded },
     )
     val coroutineScope = rememberCoroutineScope()
-    var tabsState by remember {
-        mutableStateOf(0)
-    }
     RecipeModalBottomSheet(sheetContent = {
         RecipeDetailPreview(
             recipe = buildRecipeStates.recipe,
@@ -87,34 +83,25 @@ fun BuildRecipeScreen(
                 .verticalScroll(rememberScrollState())
                 .fillMaxSize()
         ) {
-            CustomTabs(
-                titles = listOf("Create own recipe", "Generate recipe"),
-                state = tabsState,
-                onTabClick = { index ->
-                    tabsState = index
-                })
-            when (tabsState) {
-                RecipeBuilderTabsConstants.OWN_RECIPE -> RecipeBuilder(
-                    coroutineScope,
-                    buildRecipeStates,
-                    modalSheetState,
-                    applyRecipe,
-                    onRecipeNameTextChange,
-                    onRecipeUriChange,
-                    onRecipeImageChange,
-                    onIngredientsAndMeasuresAdd,
-                    onIngredientChange,
-                    onMeasureChange,
-                    onIngredientsAndMeasuresRemove,
-                    onTextInstructionChange,
-                    onVideoInstructionChange
-                )
-                RecipeBuilderTabsConstants.GENERATED_RECIPE -> Text(text = "Generated Recipe")
-            }
+            RecipeBuilder(
+                coroutineScope,
+                buildRecipeStates,
+                modalSheetState,
+                applyRecipe,
+                onRecipeNameTextChange,
+                onRecipeUriChange,
+                onRecipeImageChange,
+                onIngredientsAndMeasuresAdd,
+                onIngredientChange,
+                onMeasureChange,
+                onIngredientsAndMeasuresRemove,
+                onTextInstructionChange,
+                onVideoInstructionChange
+            )
         }
     }
-
 }
+
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

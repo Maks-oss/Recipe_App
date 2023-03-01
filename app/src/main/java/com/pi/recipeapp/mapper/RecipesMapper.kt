@@ -1,6 +1,8 @@
 package com.pi.recipeapp.mapper
 
 import com.pi.recipeapp.data.domain.Recipe
+import com.pi.recipeapp.data.dto.Categories
+import com.pi.recipeapp.data.dto.Ingredients
 import com.pi.recipeapp.data.dto.Meal
 import com.pi.recipeapp.data.dto.RecipeDto
 import com.pi.recipeapp.room.entity.Ingredient
@@ -27,6 +29,14 @@ object RecipesMapper {
                 )
             }
         }
+    }
+
+    fun convertCategoriesToStringList(categories: Categories): List<String> {
+        return categories.meals.map { it.strCategory }
+    }
+
+    fun convertIngredientsToStringList(ingredients: Ingredients): List<String> {
+        return ingredients.meals.map { it.strIngredient }
     }
 
     fun convertRecipeWithIngredientsToRecipe(recipeWithIngredients: RecipeWithIngredients): Recipe {

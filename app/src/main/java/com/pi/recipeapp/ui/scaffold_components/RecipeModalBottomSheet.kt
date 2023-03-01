@@ -1,6 +1,7 @@
 package com.pi.recipeapp.ui.scaffold_components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -16,15 +17,9 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun RecipeModalBottomSheet(modalSheetState: ModalBottomSheetState,sheetContent: @Composable () -> Unit, content: @Composable () -> Unit) {
-    val coroutineScope = rememberCoroutineScope()
-//    val modalSheetState = rememberModalBottomSheetState(
-//        initialValue = ModalBottomSheetValue.Hidden,
-//        confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded },
-//    )
-
     ModalBottomSheetLayout(
         sheetState = modalSheetState,
-        sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+        sheetShape = CutCornerShape(topStart = 16.dp, topEnd = 16.dp),
         sheetContent = {
             sheetContent()
         },

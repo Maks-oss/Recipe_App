@@ -1,6 +1,7 @@
 package com.pi.recipeapp.ui.screens.main
 
 import android.graphics.Bitmap
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -32,6 +33,23 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
 
     private var job: Job? = null
     var currentRecipe : Recipe? = null
+
+
+    val categories: MutableState<List<String>> by lazy {
+        mutableStateOf<List<String>>(emptyList()).apply {
+            viewModelScope.launch {
+                value = recipeRepository.fetchCategories()
+            }
+        }
+    }
+
+    val ingredients: MutableState<List<String>> by lazy {
+        mutableStateOf<List<String>>(emptyList()).apply {
+            viewModelScope.launch {
+                value = recipeRepository.fetchIngredients()
+            }
+        }
+    }
 
     fun onRecipeSearchInputChange(value: String) {
         job?.cancel()

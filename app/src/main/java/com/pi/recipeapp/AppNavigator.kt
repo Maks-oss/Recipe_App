@@ -1,5 +1,6 @@
 package com.pi.recipeapp
 
+import android.annotation.SuppressLint
 import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberScaffoldState
@@ -40,6 +41,8 @@ fun AppNavigator() {
             ) {
                 MainScreen(
                     provideSearchInput = mainViewModel.mainViewModelStates::recipeSearchInput,
+                    ingredients = mainViewModel.ingredients.value,
+                    categories = mainViewModel.categories.value,
                     provideRecipesState = mainViewModel::recipesTextSearchState,
                     onSearchInputChange = mainViewModel::onRecipeSearchInputChange,
                     navigateToDetailScreen = { recipe ->
@@ -111,6 +114,7 @@ fun AppNavigator() {
 }
 
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 private fun CreateScaffold(
     navController: NavController,
