@@ -29,23 +29,24 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
     var imageSearchStates: ImageSearchStates by mutableStateOf(ImageSearchStates())
         private set
 
-    private var job: Job? = null
+    var filterContentStates: FilterContentStates by mutableStateOf(FilterContentStates())
+        private set
+
     var currentRecipe : Recipe? = null
 
-
-    val categories: MutableState<List<String>> by lazy {
-        mutableStateOf<List<String>>(emptyList()).apply {
-            viewModelScope.launch {
-                value = recipeRepository.fetchCategories()
+    private var job: Job? = null
+    private var ingredientsMap: Map<String, Boolean> = emptyMap()
+    init {
+        viewModelScope.launch {
+            val ingredients = recipeRepository.fetchIngredients()
+            val categories = recipeRepository.fetchCategories()
+            ingredientsMap = filterContentStates.ingredientsMap.toMutableMap().apply {
+                putAll(ingredients.map { it to false })
             }
-        }
-    }
-
-    val ingredients: MutableState<List<String>> by lazy {
-        mutableStateOf<List<String>>(emptyList()).apply {
-            viewModelScope.launch {
-                value = recipeRepository.fetchIngredients()
+            val categoriesMap = filterContentStates.categoriesMap.toMutableMap().apply {
+                putAll(categories.map { it to false })
             }
+            filterContentStates = filterContentStates.copy(ingredientsMap = ingredientsMap, categoriesMap = categoriesMap)
         }
     }
 
@@ -60,18 +61,24 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         }
     }
 
-    fun applyFilter(ingredients: List<String>, categories: List<String>) {
+    fun applyFilter() {
         viewModelScope.launch {
-            if (ingredients.isEmpty() && categories.isEmpty()) {
+            if (isFilterNotSelected()) {
                 fetchTextRecipesSearch()
             } else {
                 recipesTextSearchState =
-                    recipesTextSearchState.copy(data = filterRecipes(ingredients, categories))
+                    recipesTextSearchState.copy(data = filterRecipes())
             }
         }
     }
-    // chicken, tomato, potato
-    private suspend fun filterRecipes(ingredients: List<String>, categories: List<String>): List<Recipe> = withContext(Dispatchers.Default) {
+
+    private fun isFilterNotSelected(): Boolean {
+        return filterContentStates.categoriesMap.filter { it.value }.isEmpty() && filterContentStates.ingredientsMap.filter { it.value }.isEmpty()
+    }
+
+    private suspend fun filterRecipes(): List<Recipe> = withContext(Dispatchers.Default) {
+        val ingredients = filterContentStates.ingredientsMap.filter { it.value }.keys
+        val categories = filterContentStates.categoriesMap.filter { it.value }.keys
         val list = recipesTextSearchState.data
         val newList = mutableListOf<Recipe>()
         if (list != null) {
@@ -127,6 +134,29 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
     }
     fun changeImageSearchRecipeName(name: String) {
         imageSearchStates = imageSearchStates.copy(recipeName = name)
+    }
+
+    fun changeIngredientsMapValue(key: String) {
+        val map = filterContentStates.ingredientsMap.toMutableMap().apply {
+            this[key] = !this[key]!!
+        }
+        filterContentStates = filterContentStates.copy(ingredientsMap = map)
+    }
+
+    fun changeCategoriesMapValue(key: String) {
+        val map = filterContentStates.categoriesMap.toMutableMap().apply {
+            this[key] = !this[key]!!
+        }
+        filterContentStates = filterContentStates.copy(categoriesMap = map)
+    }
+
+    fun changeIngredientName(value: String) {
+        val map = if (value.isEmpty()) {
+            ingredientsMap
+        } else {
+            filterContentStates.ingredientsMap.filter { it.key.contains(value, ignoreCase = true) }
+        }
+        filterContentStates = filterContentStates.copy(ingredientName = value, ingredientsMap = map)
     }
 
     fun resetRecipeState() {

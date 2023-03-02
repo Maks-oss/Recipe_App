@@ -47,20 +47,24 @@ import com.pi.recipeapp.ui.utils.BlankTextField
 import com.pi.recipeapp.ui.utils.MeasureUnconstrainedViewWidth
 import com.pi.recipeapp.ui.utils.autoWidth
 import com.pi.recipeapp.ui.utils.getSortedMapByBoolean
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(
-    ingredients: List<String>,
-    categories: List<String>,
+    provideFilterContentStates: () -> FilterContentStates,
     provideSearchInput: () -> String,
     provideRecipesState: () -> UiState<List<Recipe>>,
-    onApplyFilterClick: (List<String>, List<String>) -> Unit,
+    onApplyFilterClick: () -> Unit,
     onSearchInputChange: (String) -> Unit,
+    onFilterIngredientsMapChangeValue: (key: String) -> Unit,
+    onFilterCategoriesMapChangeValue: (key: String) -> Unit,
+    onFilterIngredientNameChangeValue: (name: String) -> Unit,
     navigateToDetailScreen: (Recipe) -> Unit,
     showSnackbar: (String) -> Unit
 ) {
+    val filterContentStates = provideFilterContentStates()
     val modalSheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden,
         confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded },
@@ -68,10 +72,12 @@ fun MainScreen(
     val coroutineScope = rememberCoroutineScope()
     RecipeModalBottomSheet(modalSheetState = modalSheetState, sheetContent = {
         FilterContent(
-            ingredients = ingredients,
-            categories = categories,
-            onApplyFilterClick = { ingredients, categories ->
-                onApplyFilterClick(ingredients, categories)
+            filterContentStates = filterContentStates,
+            onFilterIngredientNameChangeValue = onFilterIngredientNameChangeValue,
+            onFilterCategoriesMapChangeValue = onFilterCategoriesMapChangeValue,
+            onFilterIngredientsMapChangeValue = onFilterIngredientsMapChangeValue,
+            onApplyFilterClick = {
+                onApplyFilterClick()
                 coroutineScope.showModalSheetState(modalSheetState)
             })
     }) {
@@ -159,7 +165,6 @@ private fun RecipeTextField(
                     .size(25.dp)
                     .clickable {
                         showFilterSheet()
-//                            coroutineScope.showModalSheetState(modalSheetState)
                     }
             )
         }
@@ -207,28 +212,12 @@ private fun RecipeListItem(recipe: Recipe, onRecipeItemClick: (Recipe) -> Unit) 
 
 @Composable
 fun FilterContent(
-    ingredients: List<String>,
-    categories: List<String>,
-    onApplyFilterClick: (List<String>, List<String>) -> Unit
+    filterContentStates: FilterContentStates,
+    onFilterIngredientsMapChangeValue: (key: String) -> Unit,
+    onFilterCategoriesMapChangeValue: (key: String) -> Unit,
+    onFilterIngredientNameChangeValue: (name: String) -> Unit,
+    onApplyFilterClick: () -> Unit
 ) {
-    val ingredientsMap = remember {
-        mutableStateMapOf<String, Boolean>()
-    }
-    val categoriesMap = remember {
-        mutableStateMapOf<String, Boolean>()
-    }
-    LaunchedEffect(ingredients, categories) {
-        ingredientsMap.putAll(ingredients.map { it to false })
-        categoriesMap.putAll(categories.map { it to false })
-    }
-    var ingredientName by remember {
-        mutableStateOf("")
-    }
-    val specificIngredients by remember(ingredientName) {
-        derivedStateOf {
-            ingredientsMap.filter { it.key.contains(ingredientName, ignoreCase = true) }
-        }
-    }
     Column(
         Modifier
             .verticalScroll(rememberScrollState())
@@ -237,12 +226,7 @@ fun FilterContent(
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(text = "Filter", style = MaterialTheme.typography.h5)
             OutlinedButton(
-                onClick = {
-                    onApplyFilterClick(
-                        ingredientsMap.filter { it.value }.keys.toList(),
-                        categoriesMap.filter { it.value }.keys.toList()
-                    )
-                }, shape = CircleShape,
+                onClick = onApplyFilterClick, shape = CircleShape,
                 border = BorderStroke(1.dp, MaterialTheme.colors.primary)
             ) {
                 Text(text = "Apply filter")
@@ -251,23 +235,19 @@ fun FilterContent(
         Spacer(modifier = Modifier.padding(8.dp))
         Text(text = "Category", style = MaterialTheme.typography.h6)
 
-        CustomChipsGrid(elements = categoriesMap, elementsPerRow = 5, onChipClick = {chip ->
-            categoriesMap[chip] = !categoriesMap[chip]!!
-        })
+        CustomChipsGrid(elements = filterContentStates.categoriesMap, elementsPerRow = 5, onChipClick = onFilterCategoriesMapChangeValue)
         Divider(Modifier.padding(8.dp))
         Text(text = "Ingredients", style = MaterialTheme.typography.h6)
 
         BlankTextField(
-            text = ingredientName,
+            text = filterContentStates.ingredientName,
             label = "Enter Ingredient...",
             textStyle = MaterialTheme.typography.body1,
-            onTextChange = { ingredientName = it; })
+            onTextChange = onFilterIngredientNameChangeValue)
         CustomChipsGrid(
-            elements = if (ingredientName.isEmpty()) ingredientsMap.getSortedMapByBoolean() else specificIngredients.getSortedMapByBoolean(),
+            elements = filterContentStates.ingredientsMap ,
             elementsPerRow = 8,
-            onChipClick = { chip ->
-                ingredientsMap[chip] = !ingredientsMap[chip]!!
-            })
+            onChipClick = onFilterIngredientsMapChangeValue)
 
         Spacer(modifier = Modifier.padding(8.dp))
     }
