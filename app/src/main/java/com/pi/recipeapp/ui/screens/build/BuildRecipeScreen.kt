@@ -74,7 +74,6 @@ fun BuildRecipeScreen(
                     modalSheetState.hide()
                 }
                 onConfirmClick()
-
             }
         )
     }, modalSheetState = modalSheetState) {

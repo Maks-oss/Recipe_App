@@ -117,11 +117,14 @@ private fun RecipeTextField(
     onValueChange: (String) -> Unit,
     showFilterSheet: () -> Unit
 ) {
+    var isCancelVisible by remember {
+        mutableStateOf(false)
+    }
     var isFilterVisible by remember {
         mutableStateOf(false)
     }
     val focusManager = LocalFocusManager.current
-
+    val textInput = recipeSearchInput()
     Row(
         modifier = Modifier
             .padding(8.dp)
@@ -129,8 +132,11 @@ private fun RecipeTextField(
     ) {
 
         OutlinedTextField(
-            value = recipeSearchInput(),
-            onValueChange = onValueChange,
+            value = textInput,
+            onValueChange = { textValue ->
+                isFilterVisible = textValue.isNotEmpty()
+                onValueChange(textValue)
+            },
             label = { Text(text = "Enter name...") },
             leadingIcon = {
                 Icon(imageVector = Icons.Filled.Search, contentDescription = "recipe search")
@@ -141,10 +147,15 @@ private fun RecipeTextField(
                 .weight(1f, false)
                 .animateContentSize()
                 .onFocusChanged { focusState ->
-                    isFilterVisible = focusState.isFocused
+                    isCancelVisible = focusState.isFocused
+                    if (focusState.isFocused && textInput.isNotEmpty()) {
+                        isFilterVisible = true
+                    } else if (!focusState.isFocused) {
+                        isFilterVisible = false
+                    }
                 },
         )
-        AnimatedVisibility(visible = isFilterVisible) {
+        AnimatedVisibility(visible = isCancelVisible) {
             TextButton(
                 onClick = { focusManager.clearFocus() }, modifier = Modifier
                     .weight(1f, false)
@@ -235,7 +246,11 @@ fun FilterContent(
         Spacer(modifier = Modifier.padding(8.dp))
         Text(text = "Category", style = MaterialTheme.typography.h6)
 
-        CustomChipsGrid(elements = filterContentStates.categoriesMap, elementsPerRow = 5, onChipClick = onFilterCategoriesMapChangeValue)
+        CustomChipsGrid(
+            elements = filterContentStates.categoriesMap,
+            elementsPerRow = 5,
+            onChipClick = onFilterCategoriesMapChangeValue
+        )
         Divider(Modifier.padding(8.dp))
         Text(text = "Ingredients", style = MaterialTheme.typography.h6)
 
@@ -243,11 +258,13 @@ fun FilterContent(
             text = filterContentStates.ingredientName,
             label = "Enter Ingredient...",
             textStyle = MaterialTheme.typography.body1,
-            onTextChange = onFilterIngredientNameChangeValue)
+            onTextChange = onFilterIngredientNameChangeValue
+        )
         CustomChipsGrid(
-            elements = filterContentStates.ingredientsMap ,
+            elements = filterContentStates.ingredientsMap,
             elementsPerRow = 8,
-            onChipClick = onFilterIngredientsMapChangeValue)
+            onChipClick = onFilterIngredientsMapChangeValue
+        )
 
         Spacer(modifier = Modifier.padding(8.dp))
     }

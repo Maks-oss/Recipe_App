@@ -64,6 +64,7 @@ fun RecipeDetailPreview(
             onExpandClick = onExpandClick,
             isPreview = true
         )
+        Instructions(recipe)
         OutlinedButton(
             onClick = onConfirmClick,
             Modifier.padding(8.dp),
