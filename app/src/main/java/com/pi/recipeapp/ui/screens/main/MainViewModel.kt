@@ -12,9 +12,7 @@ import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchStates
 import com.pi.recipeapp.ui.screens.uistate.UiState
 import com.pi.recipeapp.utils.Response
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 class MainViewModel(private val recipeRepository: RecipeRepository) :
     ViewModel() {
@@ -60,6 +58,42 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
                 fetchTextRecipesSearch()
             }
         }
+    }
+
+    fun applyFilter(ingredients: List<String>, categories: List<String>) {
+        viewModelScope.launch {
+            if (ingredients.isEmpty() && categories.isEmpty()) {
+                fetchTextRecipesSearch()
+            } else {
+                recipesTextSearchState =
+                    recipesTextSearchState.copy(data = filterRecipes(ingredients, categories))
+            }
+        }
+    }
+    // chicken, tomato, potato
+    private suspend fun filterRecipes(ingredients: List<String>, categories: List<String>): List<Recipe> = withContext(Dispatchers.Default) {
+        val list = recipesTextSearchState.data
+        val newList = mutableListOf<Recipe>()
+        if (list != null) {
+            for (recipe in list ) {
+                var isIngredientAbsent = false
+                for (ingredient in ingredients) {
+                    if (ingredient !in recipe.ingredients.keys) {
+                        isIngredientAbsent = true
+                        break
+                    }
+                }
+                if (isIngredientAbsent) {
+                    continue
+                }
+                if (categories.isNotEmpty() && recipe.category in categories) {
+                    newList.add(recipe)
+                } else if (categories.isEmpty()) {
+                    newList.add(recipe)
+                }
+            }
+        }
+        return@withContext newList
     }
 
     suspend fun fetchImageRecipesSearch(name: String) {

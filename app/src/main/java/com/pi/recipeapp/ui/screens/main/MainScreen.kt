@@ -49,116 +49,119 @@ import com.pi.recipeapp.ui.utils.autoWidth
 import com.pi.recipeapp.ui.utils.getSortedMapByBoolean
 
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(
     ingredients: List<String>,
     categories: List<String>,
     provideSearchInput: () -> String,
     provideRecipesState: () -> UiState<List<Recipe>>,
+    onApplyFilterClick: (List<String>, List<String>) -> Unit,
     onSearchInputChange: (String) -> Unit,
     navigateToDetailScreen: (Recipe) -> Unit,
     showSnackbar: (String) -> Unit
 ) {
-
-    Column(
-        Modifier,
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        RecipeTextField(
-            ingredients = ingredients,
-            categories = categories,
-            provideSearchInput,
-            onValueChange = onSearchInputChange
-        )
-        Spacer(modifier = Modifier.padding(8.dp))
-
-        val recipeState = provideRecipesState()
-        if (recipeState.isLoading) {
-            DisplayShimmerEffect()
-        }
-        recipeState.data?.let { recipes ->
-            if (recipes.isEmpty())
-                showSnackbar(stringResource(id = R.string.empty_request_error))
-            else
-                RecipeList(recipes, navigateToDetailScreen)
-        }
-        recipeState.errorMessage?.let { error ->
-            showSnackbar(error)
-        }
-
-    }
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-private fun RecipeTextField(
-    ingredients: List<String>,
-    categories: List<String>,
-    recipeSearchInput: () -> String,
-    onValueChange: (String) -> Unit,
-    onFilterClick: () -> Unit = {}
-) {
-    var isFilterVisible by remember {
-        mutableStateOf(false)
-    }
-    val focusManager = LocalFocusManager.current
     val modalSheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden,
         confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded },
     )
     val coroutineScope = rememberCoroutineScope()
     RecipeModalBottomSheet(modalSheetState = modalSheetState, sheetContent = {
-        FilterContent(ingredients = ingredients, categories = categories, onApplyFilterClick = {
-            coroutineScope.showModalSheetState(modalSheetState)
-        })
+        FilterContent(
+            ingredients = ingredients,
+            categories = categories,
+            onApplyFilterClick = { ingredients, categories ->
+                onApplyFilterClick(ingredients, categories)
+                coroutineScope.showModalSheetState(modalSheetState)
+            })
     }) {
-        Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+        Column(
+            Modifier,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-
-            OutlinedTextField(
-                value = recipeSearchInput(),
-                onValueChange = onValueChange,
-                label = { Text(text = "Enter name...") },
-                leadingIcon = {
-                    Icon(imageVector = Icons.Filled.Search, contentDescription = "recipe search")
-                },
-                shape = CircleShape,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f, false)
-                    .animateContentSize()
-                    .onFocusChanged { focusState ->
-                        isFilterVisible = focusState.isFocused
-                    },
+            RecipeTextField(
+                recipeSearchInput = provideSearchInput,
+                onValueChange = onSearchInputChange,
+                showFilterSheet = { coroutineScope.showModalSheetState(modalSheetState) }
             )
-            AnimatedVisibility(visible = isFilterVisible) {
-                TextButton(
-                    onClick = { focusManager.clearFocus() }, modifier = Modifier
-                        .weight(1f, false)
-                        .align(Alignment.CenterVertically)
-                ) {
-                    Text(
-                        text = "Cancel",
-                        style = MaterialTheme.typography.subtitle1,
-                    )
-                }
+            Spacer(modifier = Modifier.padding(8.dp))
+
+            val recipeState = provideRecipesState()
+            if (recipeState.isLoading) {
+                DisplayShimmerEffect()
             }
-            AnimatedVisibility(visible = isFilterVisible) {
-                Icon(
-                    imageVector = Icons.Outlined.FilterAlt,
-                    contentDescription = "",
-                    modifier = Modifier
-                        .weight(1f, false)
-                        .size(25.dp)
-                        .clickable {
-                            coroutineScope.showModalSheetState(modalSheetState)
-                            onFilterClick()
-                        }
+            recipeState.data?.let { recipes ->
+                if (recipes.isEmpty())
+                    showSnackbar(stringResource(id = R.string.empty_request_error))
+                else
+                    RecipeList(recipes, navigateToDetailScreen)
+            }
+            recipeState.errorMessage?.let { error ->
+                showSnackbar(error)
+            }
+
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun RecipeTextField(
+    recipeSearchInput: () -> String,
+    onValueChange: (String) -> Unit,
+    showFilterSheet: () -> Unit
+) {
+    var isFilterVisible by remember {
+        mutableStateOf(false)
+    }
+    val focusManager = LocalFocusManager.current
+
+    Row(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        OutlinedTextField(
+            value = recipeSearchInput(),
+            onValueChange = onValueChange,
+            label = { Text(text = "Enter name...") },
+            leadingIcon = {
+                Icon(imageVector = Icons.Filled.Search, contentDescription = "recipe search")
+            },
+            shape = CircleShape,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, false)
+                .animateContentSize()
+                .onFocusChanged { focusState ->
+                    isFilterVisible = focusState.isFocused
+                },
+        )
+        AnimatedVisibility(visible = isFilterVisible) {
+            TextButton(
+                onClick = { focusManager.clearFocus() }, modifier = Modifier
+                    .weight(1f, false)
+                    .align(Alignment.CenterVertically)
+            ) {
+                Text(
+                    text = "Cancel",
+                    style = MaterialTheme.typography.subtitle1,
                 )
             }
+        }
+        AnimatedVisibility(visible = isFilterVisible) {
+            Icon(
+                imageVector = Icons.Outlined.FilterAlt,
+                contentDescription = "",
+                modifier = Modifier
+                    .weight(1f, false)
+                    .size(25.dp)
+                    .clickable {
+                        showFilterSheet()
+//                            coroutineScope.showModalSheetState(modalSheetState)
+                    }
+            )
         }
     }
 
@@ -206,13 +209,17 @@ private fun RecipeListItem(recipe: Recipe, onRecipeItemClick: (Recipe) -> Unit) 
 fun FilterContent(
     ingredients: List<String>,
     categories: List<String>,
-    onApplyFilterClick: () -> Unit
+    onApplyFilterClick: (List<String>, List<String>) -> Unit
 ) {
     val ingredientsMap = remember {
-        mutableMapOf<String, Boolean>()
+        mutableStateMapOf<String, Boolean>()
     }
-    if (ingredientsMap.isEmpty()) {
+    val categoriesMap = remember {
+        mutableStateMapOf<String, Boolean>()
+    }
+    LaunchedEffect(ingredients, categories) {
         ingredientsMap.putAll(ingredients.map { it to false })
+        categoriesMap.putAll(categories.map { it to false })
     }
     var ingredientName by remember {
         mutableStateOf("")
@@ -230,7 +237,12 @@ fun FilterContent(
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(text = "Filter", style = MaterialTheme.typography.h5)
             OutlinedButton(
-                onClick = { /*TODO*/ }, shape = CircleShape,
+                onClick = {
+                    onApplyFilterClick(
+                        ingredientsMap.filter { it.value }.keys.toList(),
+                        categoriesMap.filter { it.value }.keys.toList()
+                    )
+                }, shape = CircleShape,
                 border = BorderStroke(1.dp, MaterialTheme.colors.primary)
             ) {
                 Text(text = "Apply filter")
@@ -239,7 +251,9 @@ fun FilterContent(
         Spacer(modifier = Modifier.padding(8.dp))
         Text(text = "Category", style = MaterialTheme.typography.h6)
 
-        CustomChipsGrid(elements = categories, elementsPerRow = 5)
+        CustomChipsGrid(elements = categoriesMap, elementsPerRow = 5, onChipClick = {chip ->
+            categoriesMap[chip] = !categoriesMap[chip]!!
+        })
         Divider(Modifier.padding(8.dp))
         Text(text = "Ingredients", style = MaterialTheme.typography.h6)
 
@@ -249,10 +263,10 @@ fun FilterContent(
             textStyle = MaterialTheme.typography.body1,
             onTextChange = { ingredientName = it; })
         CustomChipsGrid(
-            elements = if (ingredientName.isEmpty()) ingredientsMap.getSortedMapByBoolean().keys.toList() else specificIngredients.getSortedMapByBoolean().keys.toList(),
+            elements = if (ingredientName.isEmpty()) ingredientsMap.getSortedMapByBoolean() else specificIngredients.getSortedMapByBoolean(),
             elementsPerRow = 8,
             onChipClick = { chip ->
-               ingredientsMap[chip] = true
+                ingredientsMap[chip] = !ingredientsMap[chip]!!
             })
 
         Spacer(modifier = Modifier.padding(8.dp))
@@ -262,7 +276,7 @@ fun FilterContent(
 @Composable
 private fun CustomChipsGrid(
     modifier: Modifier = Modifier,
-    elements: List<String>,
+    elements: Map<String, Boolean>,
     elementsPerRow: Int,
     chipSpacing: Dp = 4.dp,
     onChipClick: ((String) -> Unit)? = null,
@@ -285,9 +299,11 @@ private fun CustomChipsGrid(
                     for (col in 0 until elementsPerRow) {
                         val index = row * elementsPerRow + col
                         if (index < elements.size) {
+                            val element = elements.toList()[index]
                             CustomFilterChip(
-                                text = elements[index],
-                                onChipClick = { onChipClick?.invoke(elements[index]) }
+                                text = element.first,
+                                isSelected = element.second,
+                                onChipClick = { onChipClick?.invoke(element.first) }
                             )
                         } else {
                             Spacer(modifier = Modifier.weight(1f))
@@ -301,13 +317,10 @@ private fun CustomChipsGrid(
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
-private fun CustomFilterChip(text: String, onChipClick: (() -> Unit)) {
-    var selected by remember {
-        mutableStateOf(false)
-    }
-    FilterChip(selected = selected,
-        onClick = { selected = !selected; onChipClick() },
-        leadingIcon = if (selected) {
+private fun CustomFilterChip(text: String, isSelected: Boolean, onChipClick: (() -> Unit)) {
+    FilterChip(selected = isSelected,
+        onClick = { onChipClick() },
+        leadingIcon = if (isSelected) {
             {
                 Icon(
                     imageVector = Icons.Filled.Done,

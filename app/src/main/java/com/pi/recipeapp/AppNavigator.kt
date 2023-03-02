@@ -45,6 +45,7 @@ fun AppNavigator() {
                     categories = mainViewModel.categories.value,
                     provideRecipesState = mainViewModel::recipesTextSearchState,
                     onSearchInputChange = mainViewModel::onRecipeSearchInputChange,
+                    onApplyFilterClick = { ingredients, categories -> mainViewModel.applyFilter(ingredients, categories) },
                     navigateToDetailScreen = { recipe ->
                         mainViewModel.currentRecipe = recipe
                         navController.navigate(Routes.DetailScreenRoute.route)
