@@ -38,13 +38,12 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
     private var job: Job? = null
     private var ingredientsMap: Map<String, Boolean> = emptyMap()
     private var textRecipeResultList: List<Recipe>? = null
-
     init {
         viewModelScope.launch {
             val ingredients = recipeRepository.fetchIngredients()
             val categories = recipeRepository.fetchCategories()
             ingredientsMap = filterContentStates.ingredientsMap.toMutableMap().apply {
-                putAll(ingredients.map { it to false })
+                putAll(ingredients.map { it to false }.take(10))
             }
             val categoriesMap = filterContentStates.categoriesMap.toMutableMap().apply {
                 putAll(categories.map { it to false })
@@ -55,7 +54,6 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
             )
         }
     }
-
     fun onRecipeSearchInputChange(value: String) {
         job?.cancel()
         mainViewModelStates = mainViewModelStates.copy(recipeSearchInput = value)
@@ -66,7 +64,6 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
             }
         }
     }
-
     fun applyFilter() {
         viewModelScope.launch {
             recipesTextSearchState = if (isFilterNotSelected()) {

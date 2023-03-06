@@ -1,55 +1,34 @@
 package com.pi.recipeapp.ui.screens.main
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.*
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.times
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
-import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
-import com.google.accompanist.flowlayout.FlowRow
-import com.google.accompanist.flowlayout.MainAxisAlignment
-import com.google.accompanist.flowlayout.SizeMode
 import com.pi.recipeapp.R
 import com.pi.recipeapp.data.domain.Recipe
-import com.pi.recipeapp.data.dto.Categories
 import com.pi.recipeapp.ui.animation.DisplayShimmerEffect
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalBottomSheet
 import com.pi.recipeapp.ui.scaffold_components.showModalSheetState
 import com.pi.recipeapp.ui.screens.uistate.UiState
-import com.pi.recipeapp.ui.utils.BlankTextField
-import com.pi.recipeapp.ui.utils.MeasureUnconstrainedViewWidth
-import com.pi.recipeapp.ui.utils.autoWidth
-import com.pi.recipeapp.ui.utils.getSortedMapByBoolean
-import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterialApi::class)

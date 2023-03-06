@@ -52,7 +52,6 @@ fun LoadingShimmerEffect(height: Dp = 200.dp) {
 
 @Composable
 fun ShimmerGridItem(brush: Brush, height: Dp) {
-
     Spacer(
         modifier = Modifier
             .height(height)
@@ -61,7 +60,6 @@ fun ShimmerGridItem(brush: Brush, height: Dp) {
             .clip(CutCornerShape(16.dp))
             .background(brush)
     )
-
 }
 
 @Composable

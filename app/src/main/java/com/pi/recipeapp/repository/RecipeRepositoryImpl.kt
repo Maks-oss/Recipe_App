@@ -5,6 +5,8 @@ import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.mapper.RecipesMapper
 import com.pi.recipeapp.retrofit.RecipesService
 import com.pi.recipeapp.room.RecipesDao
+import com.pi.recipeapp.room.entity.Category
+import com.pi.recipeapp.room.entity.Ingredient
 import com.pi.recipeapp.utils.Response
 
 class RecipeRepositoryImpl(
@@ -29,7 +31,7 @@ class RecipeRepositoryImpl(
 //            insertIntoDatabase(recipeList, query)
             Response.Success(recipeList)
         } catch (exc: Exception) {
-            Log.e(TAG,"fetchMeals: ${exc.message}")
+            Log.e(TAG, "fetchMeals: ${exc.message}")
             Response.Error(exc.message)
         }
 
@@ -46,22 +48,45 @@ class RecipeRepositoryImpl(
             val recipe = RecipesMapper.convertRecipeDtoToDomain(recipes).first()
             Response.Success(recipe)
         } catch (exc: Exception) {
-            Log.e(TAG,"fetchMeals: ${exc.message}")
+            Log.e(TAG, "fetchMeals: ${exc.message}")
             Response.Error(exc.message)
         }
     }
 
     override suspend fun fetchCategories(): List<String> {
-        return RecipesMapper.convertCategoriesToStringList(recipesService.getCategoriesResponse())
-    }
-    override suspend fun fetchIngredients(): List<String> {
-        return RecipesMapper.convertIngredientsToStringList(recipesService.getIngredientsResponse())
+        val categories = recipesDao.getCategories()
+        if (categories.isNotEmpty()) return categories
+        return RecipesMapper.convertCategoriesToStringList(recipesService.getCategoriesResponse()).also { categoriesList ->
+            insertCategoriesIntoDatabase(categoriesList)
+        }
     }
 
-    private suspend fun insertIntoDatabase(recipeList: List<Recipe>, query: String) {
-        recipeList.forEach { recipe ->
-            recipesDao.insertRecipe(RecipesMapper.convertRecipetoRecipeEntity(recipe, query))
-            recipesDao.insertIngredients(RecipesMapper.convertRecipeToIngredients(recipe))
+    override suspend fun fetchIngredients(): List<String> {
+        val ingredients = recipesDao.getIngredients()
+        if (ingredients.isNotEmpty()) return ingredients
+        return RecipesMapper.convertIngredientsToStringList(recipesService.getIngredientsResponse()).also { ingredientsList ->
+            insertIngredientsIntoDatabase(ingredientsList)
         }
+    }
+
+    private suspend fun insertIngredientsIntoDatabase(ingredientList: List<String>) {
+        recipesDao.insertIngredients(
+            ingredientList.map { ingredient ->
+                Ingredient(
+                    ingredient.hashCode().toString(),
+                    ingredient
+                )
+            }
+        )
+    }
+    private suspend fun insertCategoriesIntoDatabase(categoriesList: List<String>) {
+        recipesDao.insertCategories(
+            categoriesList.map { category ->
+                Category(
+                    category.hashCode().toString(),
+                    category
+                )
+            }
+        )
     }
 }

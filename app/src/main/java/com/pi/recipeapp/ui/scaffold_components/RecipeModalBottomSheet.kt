@@ -16,7 +16,11 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun RecipeModalBottomSheet(modalSheetState: ModalBottomSheetState, sheetContent: @Composable () -> Unit, content: @Composable () -> Unit) {
+fun RecipeModalBottomSheet(
+    modalSheetState: ModalBottomSheetState,
+    sheetContent: @Composable () -> Unit,
+    content: @Composable () -> Unit
+) {
     ModalBottomSheetLayout(
         sheetState = modalSheetState,
         sheetShape = CutCornerShape(topStart = 16.dp, topEnd = 16.dp),

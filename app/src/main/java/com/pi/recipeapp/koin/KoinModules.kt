@@ -25,7 +25,7 @@ val retrofitModule = module {
 
 val databaseModule = module {
     single {
-        Room.databaseBuilder(androidContext(), RecipesDatabase::class.java, "Recipes Database")
+        Room.databaseBuilder(androidContext(), RecipesDatabase::class.java, "Recipes Database").fallbackToDestructiveMigration()
             .build()
     }
     single {
