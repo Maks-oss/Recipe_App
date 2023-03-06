@@ -13,6 +13,7 @@ import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchStates
 import com.pi.recipeapp.ui.screens.uistate.UiState
 import com.pi.recipeapp.utils.Response
 import kotlinx.coroutines.*
+import kotlin.properties.Delegates
 
 class MainViewModel(private val recipeRepository: RecipeRepository) :
     ViewModel() {
@@ -32,10 +33,12 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
     var filterContentStates: FilterContentStates by mutableStateOf(FilterContentStates())
         private set
 
-    var currentRecipe : Recipe? = null
+    var currentRecipe: Recipe? = null
 
     private var job: Job? = null
     private var ingredientsMap: Map<String, Boolean> = emptyMap()
+    private var textRecipeResultList: List<Recipe>? = null
+
     init {
         viewModelScope.launch {
             val ingredients = recipeRepository.fetchIngredients()
@@ -46,7 +49,10 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
             val categoriesMap = filterContentStates.categoriesMap.toMutableMap().apply {
                 putAll(categories.map { it to false })
             }
-            filterContentStates = filterContentStates.copy(ingredientsMap = ingredientsMap, categoriesMap = categoriesMap)
+            filterContentStates = filterContentStates.copy(
+                ingredientsMap = ingredientsMap,
+                categoriesMap = categoriesMap
+            )
         }
     }
 
@@ -63,26 +69,25 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
 
     fun applyFilter() {
         viewModelScope.launch {
-            if (isFilterNotSelected()) {
-                fetchTextRecipesSearch()
+            recipesTextSearchState = if (isFilterNotSelected()) {
+                recipesTextSearchState.copy(data = textRecipeResultList)
             } else {
-                recipesTextSearchState =
-                    recipesTextSearchState.copy(data = filterRecipes())
+                recipesTextSearchState.copy(data = filterRecipes())
             }
         }
     }
 
     private fun isFilterNotSelected(): Boolean {
-        return filterContentStates.categoriesMap.filter { it.value }.isEmpty() && filterContentStates.ingredientsMap.filter { it.value }.isEmpty()
+        return filterContentStates.categoriesMap.filter { it.value }
+            .isEmpty() && filterContentStates.ingredientsMap.filter { it.value }.isEmpty()
     }
 
     private suspend fun filterRecipes(): List<Recipe> = withContext(Dispatchers.Default) {
         val ingredients = filterContentStates.ingredientsMap.filter { it.value }.keys
         val categories = filterContentStates.categoriesMap.filter { it.value }.keys
-        val list = recipesTextSearchState.data
         val newList = mutableListOf<Recipe>()
-        if (list != null) {
-            for (recipe in list ) {
+        if (textRecipeResultList != null) {
+            for (recipe in textRecipeResultList!!) {
                 var isIngredientAbsent = false
                 for (ingredient in ingredients) {
                     if (ingredient !in recipe.ingredients.keys) {
@@ -100,6 +105,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
                 }
             }
         }
+
         return@withContext newList
     }
 
@@ -132,6 +138,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
     fun changeImageSearchBitmap(bitmap: Bitmap?) {
         imageSearchStates = imageSearchStates.copy(imageBitmap = bitmap)
     }
+
     fun changeImageSearchRecipeName(name: String) {
         imageSearchStates = imageSearchStates.copy(recipeName = name)
     }
@@ -169,7 +176,8 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
             isLoading = true,
             errorMessage = null
         )
-        val result = recipeRepository.fetchMeals( mainViewModelStates.recipeSearchInput)
+        val result = recipeRepository.fetchMeals(mainViewModelStates.recipeSearchInput)
+        textRecipeResultList = result.data
         delay(1000)
         recipesTextSearchState = when (result) {
             is Response.Success -> recipesTextSearchState.copy(

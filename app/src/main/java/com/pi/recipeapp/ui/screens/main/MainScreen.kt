@@ -1,5 +1,6 @@
 package com.pi.recipeapp.ui.screens.main
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.*
@@ -23,6 +24,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -64,15 +66,17 @@ fun MainScreen(
     navigateToDetailScreen: (Recipe) -> Unit,
     showSnackbar: (String) -> Unit
 ) {
-    val filterContentStates = provideFilterContentStates()
+    val recipeState = provideRecipesState()
     val modalSheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden,
         confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded },
     )
+
     val coroutineScope = rememberCoroutineScope()
+
     RecipeModalBottomSheet(modalSheetState = modalSheetState, sheetContent = {
         FilterContent(
-            filterContentStates = filterContentStates,
+            provideFilterContentStates = provideFilterContentStates,
             onFilterIngredientNameChangeValue = onFilterIngredientNameChangeValue,
             onFilterCategoriesMapChangeValue = onFilterCategoriesMapChangeValue,
             onFilterIngredientsMapChangeValue = onFilterIngredientsMapChangeValue,
@@ -82,17 +86,17 @@ fun MainScreen(
             })
     }) {
         Column(
-            Modifier,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             RecipeTextField(
                 recipeSearchInput = provideSearchInput,
                 onValueChange = onSearchInputChange,
-                showFilterSheet = { coroutineScope.showModalSheetState(modalSheetState) }
+                showFilterSheet = {
+                    coroutineScope.showModalSheetState(modalSheetState)
+                }
             )
             Spacer(modifier = Modifier.padding(8.dp))
 
-            val recipeState = provideRecipesState()
             if (recipeState.isLoading) {
                 DisplayShimmerEffect()
             }
@@ -102,6 +106,7 @@ fun MainScreen(
                 else
                     RecipeList(recipes, navigateToDetailScreen)
             }
+
             recipeState.errorMessage?.let { error ->
                 showSnackbar(error)
             }
@@ -180,7 +185,6 @@ private fun RecipeTextField(
             )
         }
     }
-
 }
 
 @Composable
@@ -221,118 +225,6 @@ private fun RecipeListItem(recipe: Recipe, onRecipeItemClick: (Recipe) -> Unit) 
     }
 }
 
-@Composable
-fun FilterContent(
-    filterContentStates: FilterContentStates,
-    onFilterIngredientsMapChangeValue: (key: String) -> Unit,
-    onFilterCategoriesMapChangeValue: (key: String) -> Unit,
-    onFilterIngredientNameChangeValue: (name: String) -> Unit,
-    onApplyFilterClick: () -> Unit
-) {
-    Column(
-        Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(8.dp)
-    ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = "Filter", style = MaterialTheme.typography.h5)
-            OutlinedButton(
-                onClick = onApplyFilterClick, shape = CircleShape,
-                border = BorderStroke(1.dp, MaterialTheme.colors.primary)
-            ) {
-                Text(text = "Apply filter")
-            }
-        }
-        Spacer(modifier = Modifier.padding(8.dp))
-        Text(text = "Category", style = MaterialTheme.typography.h6)
-
-        CustomChipsGrid(
-            elements = filterContentStates.categoriesMap,
-            elementsPerRow = 5,
-            onChipClick = onFilterCategoriesMapChangeValue
-        )
-        Divider(Modifier.padding(8.dp))
-        Text(text = "Ingredients", style = MaterialTheme.typography.h6)
-
-        BlankTextField(
-            text = filterContentStates.ingredientName,
-            label = "Enter Ingredient...",
-            textStyle = MaterialTheme.typography.body1,
-            onTextChange = onFilterIngredientNameChangeValue
-        )
-        CustomChipsGrid(
-            elements = filterContentStates.ingredientsMap,
-            elementsPerRow = 8,
-            onChipClick = onFilterIngredientsMapChangeValue
-        )
-
-        Spacer(modifier = Modifier.padding(8.dp))
-    }
-}
-
-@Composable
-private fun CustomChipsGrid(
-    modifier: Modifier = Modifier,
-    elements: Map<String, Boolean>,
-    elementsPerRow: Int,
-    chipSpacing: Dp = 4.dp,
-    onChipClick: ((String) -> Unit)? = null,
-) {
-    if (elements.isNotEmpty()) {
-        val numRows = remember(elements.size, elementsPerRow) {
-            (elements.size + elementsPerRow - 1) / elementsPerRow
-        }
-
-        Column(
-            modifier = modifier
-                .height(numRows * 40.dp)
-                .horizontalScroll(rememberScrollState())
-        ) {
-            for (row in 0 until numRows) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(chipSpacing)
-                ) {
-                    for (col in 0 until elementsPerRow) {
-                        val index = row * elementsPerRow + col
-                        if (index < elements.size) {
-                            val element = elements.toList()[index]
-                            CustomFilterChip(
-                                text = element.first,
-                                isSelected = element.second,
-                                onChipClick = { onChipClick?.invoke(element.first) }
-                            )
-                        } else {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterialApi::class)
-private fun CustomFilterChip(text: String, isSelected: Boolean, onChipClick: (() -> Unit)) {
-    FilterChip(selected = isSelected,
-        onClick = { onChipClick() },
-        leadingIcon = if (isSelected) {
-            {
-                Icon(
-                    imageVector = Icons.Filled.Done,
-                    contentDescription = "Localized Description"
-                )
-            }
-        } else {
-            null
-        },
-        colors = ChipDefaults.filterChipColors(selectedBackgroundColor = MaterialTheme.colors.secondary)) {
-        Text(text = text)
-    }
-}
-
-@OptIn(ExperimentalMaterialApi::class)
 @Preview(
     showBackground = true,
     showSystemUi = true
