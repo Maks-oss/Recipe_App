@@ -1,7 +1,6 @@
 package com.pi.recipeapp.ui.screens.main
 
 import android.graphics.Bitmap
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -10,10 +9,9 @@ import androidx.lifecycle.viewModelScope
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchStates
-import com.pi.recipeapp.ui.screens.uistate.UiState
+import com.pi.recipeapp.ui.utils.UiState
 import com.pi.recipeapp.utils.Response
 import kotlinx.coroutines.*
-import kotlin.properties.Delegates
 
 class MainViewModel(private val recipeRepository: RecipeRepository) :
     ViewModel() {

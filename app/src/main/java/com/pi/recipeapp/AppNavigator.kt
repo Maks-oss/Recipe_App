@@ -11,12 +11,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.pi.recipeapp.ui.navigation.navigateThroughDrawer
+import com.pi.recipeapp.ui.navigation.navigateWithPopUp
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalDrawerContent
 import com.pi.recipeapp.ui.scaffold_components.RecipeTopAppBar
 import com.pi.recipeapp.ui.screens.DetailScreen
 import com.pi.recipeapp.ui.screens.build.BuildRecipeScreen
 import com.pi.recipeapp.ui.screens.build.BuildRecipeViewModel
 import com.pi.recipeapp.ui.screens.imagesearch.RecipeImageSearchScreen
+import com.pi.recipeapp.ui.screens.login.LoginScreen
+import com.pi.recipeapp.ui.screens.login.RegistrationScreen
 import com.pi.recipeapp.ui.screens.main.MainScreen
 import com.pi.recipeapp.ui.screens.main.MainViewModel
 import com.pi.recipeapp.utils.Routes
@@ -32,7 +35,17 @@ fun AppNavigator() {
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
 
-    NavHost(navController = navController, startDestination = Routes.MainScreenRoute.route) {
+    NavHost(navController = navController, startDestination = Routes.LoginScreenRoute.route) {
+        composable(Routes.LoginScreenRoute.route) {
+            LoginScreen(navigateToMainScreen = {
+                navController.navigateWithPopUp(Routes.MainScreenRoute.route, popUpRoute = Routes.LoginScreenRoute.route)
+            }, navigateToRegistrationScreen = {
+                navController.navigate(Routes.RegistrationScreenRoute.route)
+            })
+        }
+        composable(Routes.RegistrationScreenRoute.route) {
+            RegistrationScreen()
+        }
         composable(Routes.MainScreenRoute.route) {
             CreateScaffold(
                 navController = navController,

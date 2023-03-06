@@ -28,8 +28,7 @@ import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.ui.animation.DisplayShimmerEffect
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalBottomSheet
 import com.pi.recipeapp.ui.scaffold_components.showModalSheetState
-import com.pi.recipeapp.ui.screens.uistate.UiState
-
+import com.pi.recipeapp.ui.utils.UiState
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

@@ -1,4 +1,4 @@
-package com.pi.recipeapp.ui.screens.uistate
+package com.pi.recipeapp.ui.utils
 
 data class UiState<T>(
     val data: T? = null,

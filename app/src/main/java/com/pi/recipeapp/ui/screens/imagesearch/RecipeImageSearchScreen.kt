@@ -35,7 +35,7 @@ import com.google.accompanist.flowlayout.FlowRow
 import com.pi.recipeapp.R
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.ml.LiteModelAiyVisionClassifierFoodV11
-import com.pi.recipeapp.ui.screens.uistate.UiState
+import com.pi.recipeapp.ui.utils.UiState
 import com.pi.recipeapp.ui.utils.CustomSurface
 import com.pi.recipeapp.ui.utils.HyperlinkText
 import org.tensorflow.lite.support.image.TensorImage
@@ -204,7 +204,7 @@ private fun ImageSearchButtons(
                 Text(text = "Take photo")
             }
         }
-        Spacer(modifier = Modifier.padding(8.dp))
+        Spacer(modifier = Modifier.padding(4.dp))
         OutlinedButton(
             onClick = { takePictureFromFolder.launch("image/*") },
             shape = CircleShape,

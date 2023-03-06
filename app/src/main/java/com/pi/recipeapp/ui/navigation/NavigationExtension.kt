@@ -13,3 +13,11 @@ fun NavController.navigateThroughDrawer(route: String, coroutineScope: Coroutine
         scaffoldState.drawerState.close()
     }
 }
+
+fun NavController.navigateWithPopUp(route: String, popUpRoute: String){
+    navigate(route) {
+        popUpTo(popUpRoute) {
+            inclusive = true
+        }
+    }
+}
