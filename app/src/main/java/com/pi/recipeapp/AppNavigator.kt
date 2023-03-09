@@ -1,15 +1,25 @@
 package com.pi.recipeapp
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import com.pi.recipeapp.authorization.GoogleAuth
+import com.pi.recipeapp.authorization.InAppAuth
 import com.pi.recipeapp.ui.navigation.navigateThroughDrawer
 import com.pi.recipeapp.ui.navigation.navigateWithPopUp
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalDrawerContent
@@ -27,24 +37,72 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.getViewModel
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun AppNavigator() {
+fun AppNavigator(googleAuth: GoogleAuth) {
     val navController = rememberNavController()
     val mainViewModel = getViewModel<MainViewModel>()
     val buildRecipeViewModel = getViewModel<BuildRecipeViewModel>()
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
-
-    NavHost(navController = navController, startDestination = Routes.LoginScreenRoute.route) {
+    val googleSignIn = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult(),
+        onResult = { result ->
+            googleAuth.googleAuthorize(
+                result,
+                onSuccess = { user ->
+                    mainViewModel.currentUser = user
+                    navController.navigateWithPopUp(
+                        Routes.MainScreenRoute.route,
+                        popUpRoute = Routes.LoginScreenRoute.route
+                    )
+                }, onFailure = { exc ->
+                    coroutineScope.launch {
+                        scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
+                    }
+                })
+        })
+    val inAppAuth = InAppAuth()
+    val startDestination =
+        if (mainViewModel.currentUser == null) Routes.LoginScreenRoute.route else Routes.MainScreenRoute.route
+    NavHost(navController = navController, startDestination = startDestination) {
         composable(Routes.LoginScreenRoute.route) {
-            LoginScreen(navigateToMainScreen = {
-                navController.navigateWithPopUp(Routes.MainScreenRoute.route, popUpRoute = Routes.LoginScreenRoute.route)
-            }, navigateToRegistrationScreen = {
-                navController.navigate(Routes.RegistrationScreenRoute.route)
-            })
+            Scaffold(scaffoldState = scaffoldState) {
+                LoginScreen(navigateToRegistrationScreen = {
+                    navController.navigate(Routes.RegistrationScreenRoute.route)
+                }, signInGoogle = {
+                    googleSignIn.launch(googleAuth.googleSignInClient.signInIntent)
+                }, signInInApp = { email, password ->
+                    inAppAuth.signIn(email, password, onSuccess = { user ->
+                        mainViewModel.currentUser = user
+                        navController.navigateWithPopUp(
+                            Routes.MainScreenRoute.route,
+                            popUpRoute = Routes.LoginScreenRoute.route
+                        )
+                    }, onFailure = { exc ->
+                        coroutineScope.launch {
+                            scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
+                        }
+                    })
+                })
+            }
         }
         composable(Routes.RegistrationScreenRoute.route) {
-            RegistrationScreen()
+            Scaffold(scaffoldState = scaffoldState) {
+                RegistrationScreen(register = { email, password, imageUri ->
+                    inAppAuth.signUp(email, password, imageUri, onSuccess = { user ->
+                        mainViewModel.currentUser = user
+                        navController.navigateWithPopUp(
+                            Routes.MainScreenRoute.route,
+                            popUpRoute = Routes.LoginScreenRoute.route
+                        )
+                    }, onFailure = { exc ->
+                        coroutineScope.launch {
+                            scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
+                        }
+                    })
+                })
+            }
         }
         composable(Routes.MainScreenRoute.route) {
             CreateScaffold(
@@ -138,10 +196,11 @@ private fun CreateScaffold(
     scaffoldState: ScaffoldState,
     content: @Composable () -> Unit
 ) {
+    val user = getViewModel<MainViewModel>().currentUser
     Scaffold(scaffoldState = scaffoldState, topBar = {
         RecipeTopAppBar(coroutineScope = coroutineScope, scaffoldState = scaffoldState)
     }, drawerContent = {
-        RecipeModalDrawerContent(navigateToTextSearchScreen = {
+        RecipeModalDrawerContent(user = user, navigateToTextSearchScreen = {
             navController.navigateThroughDrawer(
                 Routes.MainScreenRoute.route,
                 coroutineScope,
@@ -159,6 +218,9 @@ private fun CreateScaffold(
                 coroutineScope,
                 scaffoldState
             )
+        }, signOut = {
+            Firebase.auth.signOut()
+            navController.navigate(Routes.LoginScreenRoute.route)
         })
     }) {
         content()

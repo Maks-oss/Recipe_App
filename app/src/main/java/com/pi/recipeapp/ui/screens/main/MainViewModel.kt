@@ -6,6 +6,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchStates
@@ -32,6 +36,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         private set
 
     var currentRecipe: Recipe? = null
+    var currentUser: FirebaseUser? = Firebase.auth.currentUser
 
     private var job: Job? = null
     private var ingredientsMap: Map<String, Boolean> = emptyMap()

@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
 import androidx.compose.material.Button
 import androidx.compose.material.Text
+import com.pi.recipeapp.authorization.GoogleAuth
 import com.pi.recipeapp.ui.screens.imagesearch.RecipeImageSearchScreen
 import com.pi.recipeapp.ui.screens.main.MainScreen
 import com.pi.recipeapp.ui.screens.main.MainViewModel
@@ -18,11 +19,11 @@ import org.koin.androidx.viewmodel.ext.android.getViewModel
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val viewModel = getViewModel<MainViewModel>()
+        val googleAuth = GoogleAuth(this)
+
         setContent {
             RecipeAppTheme {
-               AppNavigator()
-//                RecipeImageSearchScreen()
+               AppNavigator(googleAuth)
             }
         }
     }

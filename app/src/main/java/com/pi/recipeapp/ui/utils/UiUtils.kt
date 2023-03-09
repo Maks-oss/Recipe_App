@@ -197,19 +197,12 @@ fun HyperlinkText(
 }
 
 @Composable
-fun MeasureUnconstrainedViewWidth(
-    viewToMeasure: @Composable () -> Unit,
-    content: @Composable (measuredWidth: Dp) -> Unit,
-) {
-    SubcomposeLayout { constraints ->
-        val measuredWidth = subcompose("viewToMeasure", viewToMeasure)[0]
-            .measure(Constraints()).width.toDp()
-
-        val contentPlaceable = subcompose("content") {
-            content(measuredWidth)
-        }[0].measure(constraints)
-        layout(contentPlaceable.width, contentPlaceable.height) {
-            contentPlaceable.place(0, 0)
-        }
+fun DisplayTextFieldError(isError: Boolean, errorMessage: String) {
+    if (isError) {
+        Text(
+            text = errorMessage,
+            style = MaterialTheme.typography.caption,
+            color = Color.Red
+        )
     }
 }

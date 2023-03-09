@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Recipe App</string>
     <string name="empty_request_error">Nothing was found by your request</string>
+<!--    <string name="server_client_id">39972456311-d2kjlmgr59u1qo2g4f1f202gqi0252ct.apps.googleusercontent.com</string>-->
+    <string name="server_client_id">152352711088-rjhea4bugv7git8qfh21qhqe41kd6g6c.apps.googleusercontent.com</string>
+    <string name="email_error">Email invalid. Please enter valid email</string>
+    <string name="password_error">Password length shouldn\'t be less than 8</string>
+    <string name="repeat_password_error">Repeated password should be equal to original</string>
 </resources>
