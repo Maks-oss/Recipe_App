@@ -37,8 +37,8 @@ fun RecipeModalDrawerContent(
 ) {
     val userImage = rememberAsyncImagePainter(
         model = ImageRequest.Builder(LocalContext.current)
-            .data(user?.photoUrl ?: AppConstants.IMAGE_NOT_FOUND_URL)
-            .size(Size.ORIGINAL) // Set the target size to load the image at.
+            .data(user?.photoUrl ?: AppConstants.ANONYM_USER)
+            .size(Size.ORIGINAL)
             .build()
     )
     Column(modifier = Modifier.fillMaxSize()) {

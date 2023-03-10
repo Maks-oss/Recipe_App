@@ -1,6 +1,7 @@
-package com.pi.recipeapp.authorization
+package com.pi.recipeapp.firebase.authorization
 
 import android.app.Activity
+import android.app.Activity.RESULT_OK
 import android.util.Log
 import androidx.activity.result.ActivityResult
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -16,7 +17,6 @@ import com.pi.recipeapp.R
 class GoogleAuth(private val activity: Activity) {
     companion object {
         private const val TAG = "GoogleAuth"
-        private const val GOOGLE_SIGN_IN_CODE = 0
     }
     private val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
         .requestIdToken(activity.getString(R.string.server_client_id))
@@ -27,7 +27,7 @@ class GoogleAuth(private val activity: Activity) {
     private val auth = Firebase.auth
 
     fun googleAuthorize(result: ActivityResult, onSuccess: (FirebaseUser?) -> Unit, onFailure: (Exception?) -> Unit) {
-        if (result.resultCode == GOOGLE_SIGN_IN_CODE) {
+        if (result.resultCode == RESULT_OK) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 val account = task.getResult(ApiException::class.java)!!
@@ -51,6 +51,10 @@ class GoogleAuth(private val activity: Activity) {
                     Log.e(TAG, "signInWithCredential:failure", task.exception)
                     onFailure(task.exception)
                 }
+            }.addOnCanceledListener {
+                Log.d(TAG, "signInCancelled: ")
+            }.addOnFailureListener {
+                Log.d(TAG, "signInFailure: $it")
             }
     }
 

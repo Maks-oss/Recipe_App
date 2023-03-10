@@ -1,6 +1,7 @@
 package com.pi.recipeapp
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,15 +12,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.pi.recipeapp.authorization.GoogleAuth
-import com.pi.recipeapp.authorization.InAppAuth
+import com.pi.recipeapp.firebase.authorization.GoogleAuth
+import com.pi.recipeapp.firebase.authorization.InAppAuth
+import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import com.pi.recipeapp.ui.navigation.navigateThroughDrawer
 import com.pi.recipeapp.ui.navigation.navigateWithPopUp
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalDrawerContent
@@ -63,8 +67,9 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                 })
         })
     val inAppAuth = InAppAuth()
+    Log.d("TAG", "AppNavigator: ${mainViewModel.currentUser?.photoUrl} ${mainViewModel.currentUser?.email}")
     val startDestination =
-        if (mainViewModel.currentUser == null) Routes.LoginScreenRoute.route else Routes.MainScreenRoute.route
+        if (mainViewModel.currentUser == null) Routes.LoginScreenRoute.route else Routes.RecipeDrawerGraphRoute.route
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Routes.LoginScreenRoute.route) {
             Scaffold(scaffoldState = scaffoldState) {
@@ -104,85 +109,84 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                 })
             }
         }
-        composable(Routes.MainScreenRoute.route) {
-            CreateScaffold(
-                navController = navController,
-                coroutineScope = coroutineScope,
-                scaffoldState = scaffoldState
-            ) {
-                MainScreen(
-                    provideSearchInput = mainViewModel.mainViewModelStates::recipeSearchInput,
-                    provideFilterContentStates = mainViewModel::filterContentStates,
-                    provideRecipesState = mainViewModel::recipesTextSearchState,
-                    onSearchInputChange = mainViewModel::onRecipeSearchInputChange,
-                    onFilterIngredientNameChangeValue = mainViewModel::changeIngredientName,
-                    onFilterCategoriesMapChangeValue = mainViewModel::changeCategoriesMapValue,
-                    onFilterIngredientsMapChangeValue = mainViewModel::changeIngredientsMapValue,
-                    onApplyFilterClick = mainViewModel::applyFilter,
-                    navigateToDetailScreen = { recipe ->
-                        mainViewModel.currentRecipe = recipe
-                        navController.navigate(Routes.DetailScreenRoute.route)
-                    },
-                    showSnackbar = { message ->
-                        coroutineScope.launch {
-                            scaffoldState.snackbarHostState.showSnackbar(message)
-                        }
-                    })
+        navigation(Routes.MainScreenRoute.route, Routes.RecipeDrawerGraphRoute.route) {
+            composable(Routes.MainScreenRoute.route) {
+                CreateScaffold(
+                    navController = navController,
+                    coroutineScope = coroutineScope,
+                    scaffoldState = scaffoldState
+                ) {
+                    MainScreen(
+                        provideSearchInput = mainViewModel.mainViewModelStates::recipeSearchInput,
+                        provideFilterContentStates = mainViewModel::filterContentStates,
+                        provideRecipesState = mainViewModel::recipesTextSearchState,
+                        onSearchInputChange = mainViewModel::onRecipeSearchInputChange,
+                        onFilterIngredientNameChangeValue = mainViewModel::changeIngredientName,
+                        onFilterCategoriesMapChangeValue = mainViewModel::changeCategoriesMapValue,
+                        onFilterIngredientsMapChangeValue = mainViewModel::changeIngredientsMapValue,
+                        onApplyFilterClick = mainViewModel::applyFilter,
+                        navigateToDetailScreen = { recipe ->
+                            mainViewModel.currentRecipe = recipe
+                            navController.navigate(Routes.DetailScreenRoute.route)
+                        },
+                        showSnackbar = { message ->
+                            coroutineScope.launch {
+                                scaffoldState.snackbarHostState.showSnackbar(message)
+                            }
+                        })
+                }
             }
-
-
-        }
-        composable(Routes.DetailScreenRoute.route) {
-            DetailScreen(
-                mainViewModel.currentRecipe,
-                onExpandClick = mainViewModel::changeExpandItem,
-                provideExpandedValue = mainViewModel.mainViewModelStates::isExpanded
-            )
-
-        }
-        composable(Routes.RecipeImageSearchScreen.route) {
-            CreateScaffold(
-                navController = navController,
-                coroutineScope = coroutineScope,
-                scaffoldState = scaffoldState
-            ) {
-                RecipeImageSearchScreen(
-                    provideRecipesImageSearchState = mainViewModel::recipesImageSearchState,
-                    imageSearchStates = mainViewModel.imageSearchStates,
-                    changeImageBitmap = { mainViewModel.changeImageSearchBitmap(it) },
-                    changeRecipeName = { mainViewModel.changeImageSearchRecipeName(it) },
-                    navigateToDetailScreen = { recipe ->
-                        mainViewModel.currentRecipe = recipe
-                        navController.navigate(Routes.DetailScreenRoute.route)
-                    },
-                    loadRecipes = { name ->
-                        mainViewModel.fetchImageRecipesSearch(name)
-                    })
+            composable(Routes.RecipeImageSearchScreen.route) {
+                CreateScaffold(
+                    navController = navController,
+                    coroutineScope = coroutineScope,
+                    scaffoldState = scaffoldState
+                ) {
+                    RecipeImageSearchScreen(
+                        provideRecipesImageSearchState = mainViewModel::recipesImageSearchState,
+                        imageSearchStates = mainViewModel.imageSearchStates,
+                        changeImageBitmap = { mainViewModel.changeImageSearchBitmap(it) },
+                        changeRecipeName = { mainViewModel.changeImageSearchRecipeName(it) },
+                        navigateToDetailScreen = { recipe ->
+                            mainViewModel.currentRecipe = recipe
+                            navController.navigate(Routes.DetailScreenRoute.route)
+                        },
+                        loadRecipes = { name ->
+                            mainViewModel.fetchImageRecipesSearch(name)
+                        })
+                }
             }
-        }
-        composable(Routes.RecipeBuilderScreenRoute.route) {
-            CreateScaffold(
-                navController = navController,
-                coroutineScope = coroutineScope,
-                scaffoldState = scaffoldState
-            ) {
-                BuildRecipeScreen(
-                    buildRecipeStates = buildRecipeViewModel.buildRecipeStates,
-                    applyRecipe = buildRecipeViewModel::changeRecipe,
-                    onExpandValueChange = buildRecipeViewModel::changeExpanded,
-                    onRecipeNameTextChange = buildRecipeViewModel::changeRecipeName,
-                    onRecipeImageChange = buildRecipeViewModel::changeImageBitmap,
-                    onRecipeUriChange = buildRecipeViewModel::changeImageUri,
-                    onIngredientsAndMeasuresAdd = buildRecipeViewModel::addIngredientAndMeasure,
-                    onIngredientChange = buildRecipeViewModel::changeIngredient,
-                    onMeasureChange = buildRecipeViewModel::changeMeasure,
-                    onIngredientsAndMeasuresRemove = buildRecipeViewModel::removeIngredientAndMeasure,
-                    onTextInstructionChange = buildRecipeViewModel::changeTextInstruction,
-                    onVideoInstructionChange = buildRecipeViewModel::changeVideoInstruction,
-                    onConfirmClick = buildRecipeViewModel::resetBuildRecipeState
+            composable(Routes.RecipeBuilderScreenRoute.route) {
+                CreateScaffold(
+                    navController = navController,
+                    coroutineScope = coroutineScope,
+                    scaffoldState = scaffoldState
+                ) {
+                    BuildRecipeScreen(
+                        buildRecipeStates = buildRecipeViewModel.buildRecipeStates,
+                        applyRecipe = buildRecipeViewModel::changeRecipe,
+                        onExpandValueChange = buildRecipeViewModel::changeExpanded,
+                        onRecipeNameTextChange = buildRecipeViewModel::changeRecipeName,
+                        onRecipeImageChange = buildRecipeViewModel::changeImageBitmap,
+                        onRecipeUriChange = buildRecipeViewModel::changeImageUri,
+                        onIngredientsAndMeasuresAdd = buildRecipeViewModel::addIngredientAndMeasure,
+                        onIngredientChange = buildRecipeViewModel::changeIngredient,
+                        onMeasureChange = buildRecipeViewModel::changeMeasure,
+                        onIngredientsAndMeasuresRemove = buildRecipeViewModel::removeIngredientAndMeasure,
+                        onTextInstructionChange = buildRecipeViewModel::changeTextInstruction,
+                        onVideoInstructionChange = buildRecipeViewModel::changeVideoInstruction,
+                        onConfirmClick = buildRecipeViewModel::resetBuildRecipeState
+                    )
+                }
+            }
+            composable(Routes.DetailScreenRoute.route) {
+                DetailScreen(
+                    mainViewModel.currentRecipe,
+                    onExpandClick = mainViewModel::changeExpandItem,
+                    provideExpandedValue = mainViewModel.mainViewModelStates::isExpanded
                 )
-            }
 
+            }
         }
     }
 }
@@ -220,7 +224,10 @@ private fun CreateScaffold(
             )
         }, signOut = {
             Firebase.auth.signOut()
-            navController.navigate(Routes.LoginScreenRoute.route)
+            navController.navigateWithPopUp(
+                Routes.LoginScreenRoute.route,
+                Routes.RecipeDrawerGraphRoute.route
+            )
         })
     }) {
         content()

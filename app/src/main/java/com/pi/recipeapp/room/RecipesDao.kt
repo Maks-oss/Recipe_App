@@ -2,6 +2,7 @@ package com.pi.recipeapp.room
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.pi.recipeapp.room.entity.Category
 import com.pi.recipeapp.room.entity.Ingredient
@@ -10,13 +11,13 @@ import com.pi.recipeapp.room.entity.Ingredient
 interface RecipesDao {
     @Query("SELECT ingredient FROM Ingredient")
     suspend fun getIngredients(): List<String>
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertIngredients(ingredients: List<Ingredient>)
 
     @Query("SELECT category FROM Category")
     suspend fun getCategories(): List<String>
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategories(categories: List<Category>)
 
 }

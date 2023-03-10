@@ -17,12 +17,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
+import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.R
+import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import com.pi.recipeapp.ui.utils.DisplayTextFieldError
 import com.pi.recipeapp.utils.AuthUtil
 
@@ -38,6 +42,9 @@ fun RegistrationScreen(register: (email: String, password: String, imageUri: Uri
         mutableStateOf("")
     }
     var passwordVisible by remember {
+        mutableStateOf(false)
+    }
+    var repeatedPasswordVisible by remember {
         mutableStateOf(false)
     }
     var isEmailError by remember {
@@ -95,10 +102,14 @@ fun RegistrationScreen(register: (email: String, password: String, imageUri: Uri
             leadingIcon = { Icon(imageVector = Icons.Default.Password, contentDescription = "") },
             trailingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Visibility,
-                    contentDescription = ""
+                    imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                    contentDescription = "",
+                    modifier = Modifier.clickable {
+                        passwordVisible = !passwordVisible
+                    }
                 )
             },
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             label = { Text(text = "Enter password...") }
         )
         DisplayTextFieldError(isError = isPasswordError, errorMessage = stringResource(id = R.string.password_error))
@@ -108,10 +119,14 @@ fun RegistrationScreen(register: (email: String, password: String, imageUri: Uri
             leadingIcon = { Icon(imageVector = Icons.Default.Password, contentDescription = "") },
             trailingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Visibility,
-                    contentDescription = ""
+                    imageVector = if (repeatedPasswordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                    contentDescription = "",
+                    modifier = Modifier.clickable {
+                        repeatedPasswordVisible = !repeatedPasswordVisible
+                    }
                 )
             },
+            visualTransformation = if (repeatedPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             label = { Text(text = "Repeat password...") }
         )
         DisplayTextFieldError(isError = isRepeatPasswordError, errorMessage = stringResource(id = R.string.repeat_password_error))
