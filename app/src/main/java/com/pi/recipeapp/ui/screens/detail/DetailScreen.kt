@@ -32,6 +32,7 @@ fun DetailScreen(
     recipe: Recipe?,
     provideExpandedValue: () -> Boolean,
     onExpandClick: () -> Unit,
+    onFavouritesClick: (Recipe) -> Unit,
     isPreview: Boolean = false
 ) {
     Column(
@@ -43,7 +44,8 @@ fun DetailScreen(
             recipe = recipe,
             provideExpandedValue = provideExpandedValue,
             onExpandClick = onExpandClick,
-            isPreview = isPreview
+            isPreview = isPreview,
+            onFavouritesClick = onFavouritesClick
         )
         Instructions(recipe)
 
@@ -51,7 +53,7 @@ fun DetailScreen(
 }
 
 @Composable
-fun RecipeDetailPreview(
+fun CreatedRecipeDetailPreview(
     recipe: Recipe?,
     provideExpandedValue: () -> Boolean,
     onExpandClick: () -> Unit,
@@ -82,6 +84,7 @@ fun Detail(
     recipe: Recipe?,
     provideExpandedValue: () -> Boolean,
     onExpandClick: () -> Unit,
+    onFavouritesClick: (Recipe) -> Unit = { },
     isPreview: Boolean = false
 ) {
     CustomSurface {
@@ -92,7 +95,7 @@ fun Detail(
                 val isExpandedList = provideExpandedValue()
                 Title(isExpandedList, recipe, onExpandClick)
                 if (!isPreview) {
-                    TextButton(onClick = { }) {
+                    TextButton(onClick = { onFavouritesClick(recipe) }) {
                         Row {
                             Icon(imageVector = Icons.Outlined.Favorite, contentDescription = "")
                             Spacer(modifier = Modifier.padding(8.dp))

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.firebase.authorization.GoogleAuth
@@ -36,6 +38,7 @@ import com.pi.recipeapp.ui.screens.login.LoginScreen
 import com.pi.recipeapp.ui.screens.login.RegistrationScreen
 import com.pi.recipeapp.ui.screens.main.MainScreen
 import com.pi.recipeapp.ui.screens.main.MainViewModel
+import com.pi.recipeapp.ui.screens.saved.SavedRecipesScreen
 import com.pi.recipeapp.utils.Routes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -55,11 +58,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
             googleAuth.googleAuthorize(
                 result,
                 onSuccess = { user ->
-                    mainViewModel.currentUser = user
-                    navController.navigateWithPopUp(
-                        Routes.MainScreenRoute.route,
-                        popUpRoute = Routes.LoginScreenRoute.route
-                    )
+                    onAuthorizationSuccess(mainViewModel, user, navController)
                 }, onFailure = { exc ->
                     coroutineScope.launch {
                         scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
@@ -67,7 +66,9 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                 })
         })
     val inAppAuth = InAppAuth()
-    Log.d("TAG", "AppNavigator: ${mainViewModel.currentUser?.photoUrl} ${mainViewModel.currentUser?.email}")
+    if (mainViewModel.currentUser != null) {
+        RealtimeDatabaseUtil.addUserRecipesListener(mainViewModel.currentUser!!.uid, mainViewModel::setSavedRecipes)
+    }
     val startDestination =
         if (mainViewModel.currentUser == null) Routes.LoginScreenRoute.route else Routes.RecipeDrawerGraphRoute.route
     NavHost(navController = navController, startDestination = startDestination) {
@@ -79,11 +80,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                     googleSignIn.launch(googleAuth.googleSignInClient.signInIntent)
                 }, signInInApp = { email, password ->
                     inAppAuth.signIn(email, password, onSuccess = { user ->
-                        mainViewModel.currentUser = user
-                        navController.navigateWithPopUp(
-                            Routes.MainScreenRoute.route,
-                            popUpRoute = Routes.LoginScreenRoute.route
-                        )
+                        onAuthorizationSuccess(mainViewModel, user, navController)
                     }, onFailure = { exc ->
                         coroutineScope.launch {
                             scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
@@ -179,16 +176,39 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                     )
                 }
             }
+            composable(Routes.SavedRecipesScreen.route) {
+                CreateScaffold(
+                    navController = navController,
+                    coroutineScope = coroutineScope,
+                    scaffoldState = scaffoldState
+                ) {
+                    SavedRecipesScreen(mainViewModel::savedRecipes)
+                }
+            }
             composable(Routes.DetailScreenRoute.route) {
                 DetailScreen(
                     mainViewModel.currentRecipe,
                     onExpandClick = mainViewModel::changeExpandItem,
-                    provideExpandedValue = mainViewModel.mainViewModelStates::isExpanded
+                    provideExpandedValue = mainViewModel.mainViewModelStates::isExpanded,
+                    onFavouritesClick = mainViewModel::addUserRecipeToFavourites
                 )
 
             }
         }
     }
+}
+
+private fun onAuthorizationSuccess(
+    mainViewModel: MainViewModel,
+    user: FirebaseUser?,
+    navController: NavHostController
+) {
+    mainViewModel.currentUser = user
+    navController.navigateWithPopUp(
+        Routes.MainScreenRoute.route,
+        popUpRoute = Routes.LoginScreenRoute.route
+    )
+//    RealtimeDatabaseUtil.addUserRecipesListener(user!!.uid, mainViewModel::setSavedRecipes)
 }
 
 
@@ -219,6 +239,12 @@ private fun CreateScaffold(
         }, navigateToCreateRecipeScreen = {
             navController.navigateThroughDrawer(
                 Routes.RecipeBuilderScreenRoute.route,
+                coroutineScope,
+                scaffoldState
+            )
+        }, navigateToSavedRecipesScreen = {
+            navController.navigateThroughDrawer(
+                Routes.SavedRecipesScreen.route,
                 coroutineScope,
                 scaffoldState
             )

@@ -31,7 +31,7 @@ import com.pi.recipeapp.R
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalBottomSheet
 import com.pi.recipeapp.ui.scaffold_components.showModalSheetState
-import com.pi.recipeapp.ui.screens.RecipeDetailPreview
+import com.pi.recipeapp.ui.screens.CreatedRecipeDetailPreview
 import com.pi.recipeapp.ui.utils.BlankTextField
 import com.pi.recipeapp.ui.utils.CustomSurface
 import com.pi.recipeapp.ui.utils.CustomTabs
@@ -65,7 +65,7 @@ fun BuildRecipeScreen(
     )
     val coroutineScope = rememberCoroutineScope()
     RecipeModalBottomSheet(sheetContent = {
-        RecipeDetailPreview(
+        CreatedRecipeDetailPreview(
             recipe = buildRecipeStates.recipe,
             provideExpandedValue = { buildRecipeStates.isExpanded },
             onExpandClick = onExpandValueChange,

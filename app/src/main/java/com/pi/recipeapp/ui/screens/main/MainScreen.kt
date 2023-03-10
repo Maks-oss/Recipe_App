@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -166,18 +167,16 @@ private fun RecipeTextField(
 }
 
 @Composable
-private fun RecipeList(recipes: List<Recipe>, onRecipeItemClick: (Recipe) -> Unit) {
+fun RecipeList(recipes: List<Recipe>, onRecipeItemClick: (Recipe) -> Unit) {
     LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Fixed(2)) {
         items(recipes) {
             RecipeListItem(it, onRecipeItemClick)
         }
     }
-
-
 }
 
 @Composable
-private fun RecipeListItem(recipe: Recipe, onRecipeItemClick: (Recipe) -> Unit) {
+fun RecipeListItem(recipe: Recipe, onRecipeItemClick: (Recipe) -> Unit) {
     Card(
         modifier = Modifier
             .padding(8.dp)
@@ -189,15 +188,18 @@ private fun RecipeListItem(recipe: Recipe, onRecipeItemClick: (Recipe) -> Unit) 
                 painter = rememberAsyncImagePainter(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(recipe.imageUrl)
-                        .size(Size.ORIGINAL) // Set the target size to load the image at.
+                        .size(Size.ORIGINAL)
                         .build()
                 ),
-                contentDescription = ""
+                contentDescription = "",
+                modifier = Modifier.fillMaxWidth(),
+                contentScale = ContentScale.Crop
             )
             Text(
-                recipe.name, modifier = Modifier
+                text = recipe.name, modifier = Modifier
                     .padding(8.dp)
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                style = MaterialTheme.typography.body1
             )
         }
     }

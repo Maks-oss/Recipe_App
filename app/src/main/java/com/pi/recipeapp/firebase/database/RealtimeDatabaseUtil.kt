@@ -4,9 +4,9 @@ package com.pi.recipeapp.firebase.database
 import android.util.Base64
 import android.util.Log
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
 import com.google.firebase.database.ktx.database
+import com.google.firebase.database.ktx.getValue
 import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.data.domain.Recipe
 import kotlinx.coroutines.Dispatchers
@@ -18,20 +18,40 @@ object RealtimeDatabaseUtil {
     lateinit var databaseReference: DatabaseReference
 
     fun addUserRecipeToDb(userId: String, recipe: Recipe) {
-        databaseReference.child("users/${userId}/recipes").setValue(recipe)
+        val reference = databaseReference.child("users/${userId}")
+        reference.get().addOnSuccessListener {
+            Log.d(TAG, "getUserRecipesSuccess: ${it.value?.javaClass?.simpleName}")
+            val recipes = it.value as? List<Recipe>
+            if (recipes != null) {
+                val newListData = recipes.toMutableList()
+                if (!newListData.contains(recipe)) {
+                    reference.setValue(newListData.apply { add(recipe) })
+                } else {
+                    // Display message about existing recipe
+                }
+            } else {
+                reference.setValue(listOf(recipe))
+            }
+        }.addOnFailureListener {
+            Log.w(TAG, "getUserRecipesFailed: ${it.message}")
+        }
     }
 
-    suspend fun getUserRecipes(userId: String): List<Recipe> = withContext(Dispatchers.Default) {
-        var value: List<Recipe>? = null
-        while (value == null) {
-            databaseReference.child("users/${userId}/recipes").get().addOnSuccessListener {
-                Log.d(TAG, "getUserRecipesSuccess: ${it.value}")
-                value = it.value as List<Recipe>
-            }.addOnFailureListener {
-                Log.w(TAG, "getUserRecipesFailed: ${it.message}")
-                value = emptyList()
+    fun addUserRecipesListener(userId: String, onRecipeDataChange: (List<Recipe>?) -> Unit) {
+        val postListener = object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                // Get Post object and use the values to update the UI
+                val recipes = dataSnapshot.getValue<List<Recipe>>()
+                onRecipeDataChange(recipes)
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                // Getting Post failed, log a message
+                Log.w(TAG, "loadPost:onCancelled", databaseError.toException())
             }
         }
-        return@withContext value!!
+        databaseReference.child("users/${userId}").addValueEventListener(postListener)
     }
+
+
 }

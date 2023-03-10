@@ -11,6 +11,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.data.domain.Recipe
+import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchStates
 import com.pi.recipeapp.ui.utils.UiState
@@ -36,11 +37,14 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         private set
 
     var currentRecipe: Recipe? = null
+    var savedRecipes: List<Recipe>? = null
+        private set
     var currentUser: FirebaseUser? = Firebase.auth.currentUser
 
     private var job: Job? = null
     private var ingredientsMap: Map<String, Boolean> = emptyMap()
     private var textRecipeResultList: List<Recipe>? = null
+
     init {
         viewModelScope.launch {
             val ingredients = recipeRepository.fetchIngredients()
@@ -57,6 +61,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
             )
         }
     }
+
     fun onRecipeSearchInputChange(value: String) {
         job?.cancel()
         mainViewModelStates = mainViewModelStates.copy(recipeSearchInput = value)
@@ -66,6 +71,16 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
                 fetchTextRecipesSearch()
             }
         }
+    }
+
+    fun addUserRecipeToFavourites(recipe: Recipe) {
+        if (currentUser != null) {
+            RealtimeDatabaseUtil.addUserRecipeToDb(currentUser!!.uid, recipe)
+        }
+    }
+
+    fun setSavedRecipes(savedRecipes: List<Recipe>?) {
+        this.savedRecipes = savedRecipes
     }
     fun applyFilter() {
         viewModelScope.launch {
