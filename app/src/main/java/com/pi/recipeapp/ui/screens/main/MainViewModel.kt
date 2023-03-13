@@ -101,8 +101,10 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
             isLoading = true,
             errorMessage = null
         )
-        val result = recipeRepository.fetchMeals(name)
+        val result =
+            recipeRepository.fetchMeals(name)
         delay(1000)
+
         recipesImageSearchState = when (result) {
             is Response.Success -> recipesImageSearchState.copy(
                 data = result.data,
@@ -163,7 +165,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         delay(1000)
         recipesTextSearchState = when (result) {
             is Response.Success -> recipesTextSearchState.copy(
-                data = result.data,
+                data = if (isFilterNotSelected()) result.data else filterRecipes(),
                 isLoading = false,
                 errorMessage = null
             )

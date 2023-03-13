@@ -1,5 +1,6 @@
 package com.pi.recipeapp.ui.screens.main
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.*
@@ -83,7 +84,7 @@ fun MainScreen(
                 if (recipes.isEmpty())
                     showSnackbar(stringResource(id = R.string.empty_request_error))
                 else
-                    RecipeList(recipes, navigateToDetailScreen)
+                    RecipeGridList(Modifier.fillMaxSize(), recipes, navigateToDetailScreen)
             }
 
             recipeState.errorMessage?.let { error ->
@@ -167,8 +168,18 @@ private fun RecipeTextField(
 }
 
 @Composable
-fun RecipeList(recipes: List<Recipe>, onRecipeItemClick: (Recipe) -> Unit) {
-    LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Fixed(2)) {
+fun RecipeGridList(
+    modifier: Modifier = Modifier,
+    recipes: List<Recipe>,
+    onRecipeItemClick: (Recipe) -> Unit
+) {
+    val recipeByCategories = recipes.groupBy { it.category }
+    Log.d(
+        "TAG",
+        "RecipeList: ${recipeByCategories.entries.map { listEntry -> listEntry.key to listEntry.value.map { it.name } }}"
+    )
+    LazyVerticalGrid(modifier = modifier, columns = GridCells.Fixed(2)) {
+
         items(recipes) {
             RecipeListItem(it, onRecipeItemClick)
         }

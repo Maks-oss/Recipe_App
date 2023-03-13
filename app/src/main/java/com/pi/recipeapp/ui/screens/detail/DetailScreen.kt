@@ -26,6 +26,7 @@ import com.pi.recipeapp.ui.utils.CustomSurface
 import com.pi.recipeapp.ui.utils.CustomTabs
 import com.pi.recipeapp.ui.utils.VideoPlayer
 import com.pi.recipeapp.utils.InstructionTabsConstants
+import com.pi.recipeapp.utils.Routes
 
 @Composable
 fun DetailScreen(
@@ -33,7 +34,7 @@ fun DetailScreen(
     provideExpandedValue: () -> Boolean,
     onExpandClick: () -> Unit,
     onFavouritesClick: (Recipe) -> Unit,
-    isPreview: Boolean = false
+    isPreview: Boolean = false,
 ) {
     Column(
         modifier = Modifier
