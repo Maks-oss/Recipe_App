@@ -6,15 +6,18 @@ import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.ui.screens.main.RecipeList
 
 @Composable
-fun SavedRecipesScreen(provideSavedRecipes: () -> List<Recipe>?) {
+fun SavedRecipesScreen(
+    provideSavedRecipes: () -> List<Recipe>?,
+    onRecipeItemClick: (Recipe) -> Unit
+) {
     val savedRecipes = provideSavedRecipes()
     if (savedRecipes != null) {
-        RecipeList(recipes = savedRecipes, onRecipeItemClick = {})
+        RecipeList(recipes = savedRecipes, onRecipeItemClick = onRecipeItemClick)
     }
 }
 
 @Preview(showSystemUi = true)
 @Composable
 fun SavedRecipesScreenPreview() {
-    SavedRecipesScreen { emptyList() }
+//    SavedRecipesScreen({}) { emptyList() }
 }

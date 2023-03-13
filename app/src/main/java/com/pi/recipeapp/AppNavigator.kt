@@ -1,8 +1,6 @@
 package com.pi.recipeapp
 
 import android.annotation.SuppressLint
-import android.util.Log
-import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.Scaffold
@@ -10,24 +8,19 @@ import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import androidx.navigation.NavOptions
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.firebase.authorization.GoogleAuth
 import com.pi.recipeapp.firebase.authorization.InAppAuth
-import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
-import com.pi.recipeapp.ui.navigation.navigateThroughDrawer
-import com.pi.recipeapp.ui.navigation.navigateWithPopUp
+import com.pi.recipeapp.ui.navigation.NavigationExtension
+
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalDrawerContent
 import com.pi.recipeapp.ui.scaffold_components.RecipeTopAppBar
 import com.pi.recipeapp.ui.screens.DetailScreen
@@ -52,13 +45,15 @@ fun AppNavigator(googleAuth: GoogleAuth) {
     val buildRecipeViewModel = getViewModel<BuildRecipeViewModel>()
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
+    val navigationExtension =
+        NavigationExtension(coroutineScope, scaffoldState, mainViewModel, navController)
     val googleSignIn = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
         onResult = { result ->
             googleAuth.googleAuthorize(
                 result,
                 onSuccess = { user ->
-                    onAuthorizationSuccess(mainViewModel, user, navController)
+                    onAuthorizationSuccess(mainViewModel, user, navigationExtension)
                 }, onFailure = { exc ->
                     coroutineScope.launch {
                         scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
@@ -66,9 +61,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                 })
         })
     val inAppAuth = InAppAuth()
-    if (mainViewModel.currentUser != null) {
-        RealtimeDatabaseUtil.addUserRecipesListener(mainViewModel.currentUser!!.uid, mainViewModel::setSavedRecipes)
-    }
+
     val startDestination =
         if (mainViewModel.currentUser == null) Routes.LoginScreenRoute.route else Routes.RecipeDrawerGraphRoute.route
     NavHost(navController = navController, startDestination = startDestination) {
@@ -80,7 +73,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                     googleSignIn.launch(googleAuth.googleSignInClient.signInIntent)
                 }, signInInApp = { email, password ->
                     inAppAuth.signIn(email, password, onSuccess = { user ->
-                        onAuthorizationSuccess(mainViewModel, user, navController)
+                        onAuthorizationSuccess(mainViewModel, user, navigationExtension)
                     }, onFailure = { exc ->
                         coroutineScope.launch {
                             scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
@@ -94,7 +87,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                 RegistrationScreen(register = { email, password, imageUri ->
                     inAppAuth.signUp(email, password, imageUri, onSuccess = { user ->
                         mainViewModel.currentUser = user
-                        navController.navigateWithPopUp(
+                        navigationExtension.navigateWithPopUp(
                             Routes.MainScreenRoute.route,
                             popUpRoute = Routes.LoginScreenRoute.route
                         )
@@ -109,7 +102,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
         navigation(Routes.MainScreenRoute.route, Routes.RecipeDrawerGraphRoute.route) {
             composable(Routes.MainScreenRoute.route) {
                 CreateScaffold(
-                    navController = navController,
+                    navigationExtension = navigationExtension,
                     coroutineScope = coroutineScope,
                     scaffoldState = scaffoldState
                 ) {
@@ -135,7 +128,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
             }
             composable(Routes.RecipeImageSearchScreen.route) {
                 CreateScaffold(
-                    navController = navController,
+                    navigationExtension = navigationExtension,
                     coroutineScope = coroutineScope,
                     scaffoldState = scaffoldState
                 ) {
@@ -155,7 +148,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
             }
             composable(Routes.RecipeBuilderScreenRoute.route) {
                 CreateScaffold(
-                    navController = navController,
+                    navigationExtension = navigationExtension,
                     coroutineScope = coroutineScope,
                     scaffoldState = scaffoldState
                 ) {
@@ -178,11 +171,15 @@ fun AppNavigator(googleAuth: GoogleAuth) {
             }
             composable(Routes.SavedRecipesScreen.route) {
                 CreateScaffold(
-                    navController = navController,
+                    navigationExtension = navigationExtension,
                     coroutineScope = coroutineScope,
                     scaffoldState = scaffoldState
                 ) {
-                    SavedRecipesScreen(mainViewModel::savedRecipes)
+                    SavedRecipesScreen(mainViewModel::savedRecipes, onRecipeItemClick = { recipe ->
+//                        mainViewModel.currentRecipe = recipe
+//                        navController.navigate(Routes.DetailScreenRoute.route)
+                        navigationExtension.navigateToRecipeDetailScreen(recipe)
+                    })
                 }
             }
             composable(Routes.DetailScreenRoute.route) {
@@ -201,21 +198,20 @@ fun AppNavigator(googleAuth: GoogleAuth) {
 private fun onAuthorizationSuccess(
     mainViewModel: MainViewModel,
     user: FirebaseUser?,
-    navController: NavHostController
+    navigationExtension: NavigationExtension
 ) {
     mainViewModel.currentUser = user
-    navController.navigateWithPopUp(
+    navigationExtension.navigateWithPopUp(
         Routes.MainScreenRoute.route,
         popUpRoute = Routes.LoginScreenRoute.route
     )
-//    RealtimeDatabaseUtil.addUserRecipesListener(user!!.uid, mainViewModel::setSavedRecipes)
 }
 
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 private fun CreateScaffold(
-    navController: NavController,
+    navigationExtension: NavigationExtension,
     coroutineScope: CoroutineScope,
     scaffoldState: ScaffoldState,
     content: @Composable () -> Unit
@@ -225,32 +221,24 @@ private fun CreateScaffold(
         RecipeTopAppBar(coroutineScope = coroutineScope, scaffoldState = scaffoldState)
     }, drawerContent = {
         RecipeModalDrawerContent(user = user, navigateToTextSearchScreen = {
-            navController.navigateThroughDrawer(
-                Routes.MainScreenRoute.route,
-                coroutineScope,
-                scaffoldState
+            navigationExtension.navigateThroughDrawer(
+                Routes.MainScreenRoute.route
             )
         }, navigateToImageSearchScreen = {
-            navController.navigateThroughDrawer(
-                Routes.RecipeImageSearchScreen.route,
-                coroutineScope,
-                scaffoldState
+            navigationExtension.navigateThroughDrawer(
+                Routes.RecipeImageSearchScreen.route
             )
         }, navigateToCreateRecipeScreen = {
-            navController.navigateThroughDrawer(
-                Routes.RecipeBuilderScreenRoute.route,
-                coroutineScope,
-                scaffoldState
+            navigationExtension.navigateThroughDrawer(
+                Routes.RecipeBuilderScreenRoute.route
             )
         }, navigateToSavedRecipesScreen = {
-            navController.navigateThroughDrawer(
-                Routes.SavedRecipesScreen.route,
-                coroutineScope,
-                scaffoldState
+            navigationExtension.navigateThroughDrawer(
+                Routes.SavedRecipesScreen.route
             )
         }, signOut = {
             Firebase.auth.signOut()
-            navController.navigateWithPopUp(
+            navigationExtension.navigateWithPopUp(
                 Routes.LoginScreenRoute.route,
                 Routes.RecipeDrawerGraphRoute.route
             )

@@ -16,7 +16,8 @@ import kotlinx.coroutines.withContext
 object RealtimeDatabaseUtil {
     private const val TAG = "RealtimeDatabase"
     lateinit var databaseReference: DatabaseReference
-
+    var isListenerAdded: Boolean = false
+        private set
     fun addUserRecipeToDb(userId: String, recipe: Recipe) {
         val reference = databaseReference.child("users/${userId}")
         reference.get().addOnSuccessListener {
@@ -38,6 +39,7 @@ object RealtimeDatabaseUtil {
     }
 
     fun addUserRecipesListener(userId: String, onRecipeDataChange: (List<Recipe>?) -> Unit) {
+
         val postListener = object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 // Get Post object and use the values to update the UI
@@ -51,6 +53,7 @@ object RealtimeDatabaseUtil {
             }
         }
         databaseReference.child("users/${userId}").addValueEventListener(postListener)
+
     }
 
 

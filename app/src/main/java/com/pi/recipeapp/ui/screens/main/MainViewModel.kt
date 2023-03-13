@@ -15,8 +15,11 @@ import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchStates
 import com.pi.recipeapp.ui.utils.UiState
+import com.pi.recipeapp.ui.utils.addSavedRecipesListener
 import com.pi.recipeapp.utils.Response
 import kotlinx.coroutines.*
+import org.koin.androidx.compose.get
+import kotlin.properties.Delegates
 
 class MainViewModel(private val recipeRepository: RecipeRepository) :
     ViewModel() {
@@ -39,7 +42,9 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
     var currentRecipe: Recipe? = null
     var savedRecipes: List<Recipe>? = null
         private set
-    var currentUser: FirebaseUser? = Firebase.auth.currentUser
+    var currentUser: FirebaseUser? by Delegates.observable(Firebase.auth.currentUser) { _, _, newValue ->
+        newValue.addSavedRecipesListener { savedRecipes = it }
+    }
 
     private var job: Job? = null
     private var ingredientsMap: Map<String, Boolean> = emptyMap()
@@ -59,6 +64,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
                 ingredientsMap = ingredientsMap,
                 categoriesMap = categoriesMap
             )
+            currentUser.addSavedRecipesListener { savedRecipes = it }
         }
     }
 
@@ -78,10 +84,6 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
             RealtimeDatabaseUtil.addUserRecipeToDb(currentUser!!.uid, recipe)
         }
     }
-
-    fun setSavedRecipes(savedRecipes: List<Recipe>?) {
-        this.savedRecipes = savedRecipes
-    }
     fun applyFilter() {
         viewModelScope.launch {
             recipesTextSearchState = if (isFilterNotSelected()) {
@@ -92,37 +94,6 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         }
     }
 
-    private fun isFilterNotSelected(): Boolean {
-        return filterContentStates.categoriesMap.filter { it.value }
-            .isEmpty() && filterContentStates.ingredientsMap.filter { it.value }.isEmpty()
-    }
-
-    private suspend fun filterRecipes(): List<Recipe> = withContext(Dispatchers.Default) {
-        val ingredients = filterContentStates.ingredientsMap.filter { it.value }.keys
-        val categories = filterContentStates.categoriesMap.filter { it.value }.keys
-        val newList = mutableListOf<Recipe>()
-        if (textRecipeResultList != null) {
-            for (recipe in textRecipeResultList!!) {
-                var isIngredientAbsent = false
-                for (ingredient in ingredients) {
-                    if (ingredient !in recipe.ingredients.keys) {
-                        isIngredientAbsent = true
-                        break
-                    }
-                }
-                if (isIngredientAbsent) {
-                    continue
-                }
-                if (categories.isNotEmpty() && recipe.category in categories) {
-                    newList.add(recipe)
-                } else if (categories.isEmpty()) {
-                    newList.add(recipe)
-                }
-            }
-        }
-
-        return@withContext newList
-    }
 
     suspend fun fetchImageRecipesSearch(name: String) {
         recipesImageSearchState = recipesImageSearchState.copy(
@@ -181,10 +152,6 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         filterContentStates = filterContentStates.copy(ingredientName = value, ingredientsMap = map)
     }
 
-    fun resetRecipeState() {
-        imageSearchStates = imageSearchStates.copy(recipeName = "", imageBitmap = null)
-    }
-
     private suspend fun fetchTextRecipesSearch() {
         recipesTextSearchState = recipesTextSearchState.copy(
             data = null,
@@ -207,6 +174,36 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
             )
         }
     }
+    private fun isFilterNotSelected(): Boolean {
+        return filterContentStates.categoriesMap.filter { it.value }
+            .isEmpty() && filterContentStates.ingredientsMap.filter { it.value }.isEmpty()
+    }
 
+    private suspend fun filterRecipes(): List<Recipe> = withContext(Dispatchers.Default) {
+        val ingredients = filterContentStates.ingredientsMap.filter { it.value }.keys
+        val categories = filterContentStates.categoriesMap.filter { it.value }.keys
+        val newList = mutableListOf<Recipe>()
+        if (textRecipeResultList != null) {
+            for (recipe in textRecipeResultList!!) {
+                var isIngredientAbsent = false
+                for (ingredient in ingredients) {
+                    if (ingredient !in recipe.ingredients.keys) {
+                        isIngredientAbsent = true
+                        break
+                    }
+                }
+                if (isIngredientAbsent) {
+                    continue
+                }
+                if (categories.isNotEmpty() && recipe.category in categories) {
+                    newList.add(recipe)
+                } else if (categories.isEmpty()) {
+                    newList.add(recipe)
+                }
+            }
+        }
+
+        return@withContext newList
+    }
 
 }

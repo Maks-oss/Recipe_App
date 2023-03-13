@@ -4,19 +4,14 @@ import androidx.compose.runtime.toMutableStateMap
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.layout.layout
+import com.google.firebase.auth.FirebaseUser
+import com.pi.recipeapp.data.domain.Recipe
+import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-fun Modifier.autoWidth() = composed {
-    layout { measurable, constraints ->
-        val placeable = measurable.measure(constraints)
-        layout(placeable.width, placeable.height) {
-            placeable.placeRelative(0, 0)
-        }
+fun FirebaseUser?.addSavedRecipesListener(onDataChange: (List<Recipe>?) -> Unit) {
+    if (this != null) {
+        RealtimeDatabaseUtil.addUserRecipesListener(this.uid, onDataChange)
     }
 }
-
- fun<K> Map<K,Boolean>.getSortedMapByBoolean(booleanValue: Boolean = true): Map<K, Boolean>/* = withContext(Dispatchers.IO)*/ {
-    return this@getSortedMapByBoolean.toList().sortedByDescending { it.second == booleanValue }.toMap()
-}
-
