@@ -6,8 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberScaffoldState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -19,6 +18,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.firebase.authorization.GoogleAuth
 import com.pi.recipeapp.firebase.authorization.InAppAuth
+import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import com.pi.recipeapp.ui.navigation.NavigationExtension
 
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalDrawerContent
@@ -115,10 +115,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                         onFilterCategoriesMapChangeValue = mainViewModel::changeCategoriesMapValue,
                         onFilterIngredientsMapChangeValue = mainViewModel::changeIngredientsMapValue,
                         onApplyFilterClick = mainViewModel::applyFilter,
-                        navigateToDetailScreen = { recipe ->
-                            mainViewModel.currentRecipe = recipe
-                            navController.navigate(Routes.DetailScreenRoute.route)
-                        },
+                        navigateToDetailScreen = navigationExtension::navigateToRecipeDetailScreen,
                         showSnackbar = { message ->
                             coroutineScope.launch {
                                 scaffoldState.snackbarHostState.showSnackbar(message)
@@ -137,13 +134,9 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                         imageSearchStates = mainViewModel.imageSearchStates,
                         changeImageBitmap = { mainViewModel.changeImageSearchBitmap(it) },
                         changeRecipeName = { mainViewModel.changeImageSearchRecipeName(it) },
-                        navigateToDetailScreen = { recipe ->
-                            mainViewModel.currentRecipe = recipe
-                            navController.navigate(Routes.DetailScreenRoute.route)
-                        },
-                        loadRecipes = { name ->
-                            mainViewModel.fetchImageRecipesSearch(name)
-                        })
+                        navigateToDetailScreen = navigationExtension::navigateToRecipeDetailScreen,
+                        loadRecipes = mainViewModel::fetchImageRecipesSearch
+                    )
                 }
             }
             composable(Routes.RecipeBuilderScreenRoute.route) {
@@ -173,15 +166,30 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                 CreateScaffold(
                     navigationExtension = navigationExtension,
                     coroutineScope = coroutineScope,
-                    scaffoldState = scaffoldState
+                    scaffoldState = scaffoldState,
+                    isDeleteIconVisible = mainViewModel.isDeleteIconVisible,
+                    onItemDeleteClick = {
+                        if (mainViewModel.currentUser != null) {
+                            RealtimeDatabaseUtil.deleteUserRecipes(
+                                mainViewModel.currentUser!!.uid,
+                                mainViewModel.selectedRecipesIds
+                            )
+                        }
+                    }
                 ) {
-                    SavedRecipesScreen(mainViewModel::savedRecipes, onRecipeItemClick = { recipe ->
-//                        mainViewModel.currentRecipe = recipe
-//                        navController.navigate(Routes.DetailScreenRoute.route)
-                        navigationExtension.navigateToRecipeDetailScreen(recipe)
-                    })
+                    SavedRecipesScreen(
+                        provideSavedRecipes = mainViewModel::savedRecipes,
+                        onRecipeItemClick = navigationExtension::navigateToRecipeDetailScreen,
+                        onRecipeItemLongClick = { recipe, isSelected ->
+                            if (isSelected) {
+                                mainViewModel.addRecipeId(recipe)
+                            } else {
+                                mainViewModel.removeRecipeId(recipe)
+                            }
+                        })
                 }
             }
+
             composable(Routes.DetailScreenRoute.route) {
                 DetailScreen(
                     mainViewModel.currentRecipe,
@@ -214,11 +222,19 @@ private fun CreateScaffold(
     navigationExtension: NavigationExtension,
     coroutineScope: CoroutineScope,
     scaffoldState: ScaffoldState,
+    isDeleteIconVisible: Boolean = false,
+    onItemDeleteClick: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     val user = getViewModel<MainViewModel>().currentUser
+
     Scaffold(scaffoldState = scaffoldState, topBar = {
-        RecipeTopAppBar(coroutineScope = coroutineScope, scaffoldState = scaffoldState)
+        RecipeTopAppBar(
+            coroutineScope = coroutineScope,
+            scaffoldState = scaffoldState,
+            isItemsSelected = isDeleteIconVisible,
+            onItemDeleteClick = onItemDeleteClick
+        )
     }, drawerContent = {
         RecipeModalDrawerContent(user = user, navigateToTextSearchScreen = {
             navigationExtension.navigateThroughDrawer(

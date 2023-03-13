@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -14,11 +13,11 @@ import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchStates
+import com.pi.recipeapp.ui.screens.saved.SavedRecipesStates
 import com.pi.recipeapp.ui.utils.UiState
 import com.pi.recipeapp.ui.utils.addSavedRecipesListener
 import com.pi.recipeapp.utils.Response
 import kotlinx.coroutines.*
-import org.koin.androidx.compose.get
 import kotlin.properties.Delegates
 
 class MainViewModel(private val recipeRepository: RecipeRepository) :
@@ -39,9 +38,15 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
     var filterContentStates: FilterContentStates by mutableStateOf(FilterContentStates())
         private set
 
-    var currentRecipe: Recipe? = null
-    var savedRecipes: List<Recipe>? = null
+    private val _selectedRecipes: MutableList<Int> = mutableListOf()
+    val selectedRecipesIds: List<Int> by mutableStateOf(_selectedRecipes.toList())
+    var isDeleteIconVisible by mutableStateOf(selectedRecipesIds.isNotEmpty())
+
+    var savedRecipes: List<Recipe>? by mutableStateOf(null)
         private set
+
+
+    var currentRecipe: Recipe? = null
     var currentUser: FirebaseUser? by Delegates.observable(Firebase.auth.currentUser) { _, _, newValue ->
         newValue.addSavedRecipesListener { savedRecipes = it }
     }
@@ -81,7 +86,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
 
     fun addUserRecipeToFavourites(recipe: Recipe) {
         if (currentUser != null) {
-            RealtimeDatabaseUtil.addUserRecipeToDb(currentUser!!.uid, recipe)
+            RealtimeDatabaseUtil.addUserRecipe(currentUser!!.uid, recipe)
         }
     }
     fun applyFilter() {
@@ -154,6 +159,24 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         filterContentStates = filterContentStates.copy(ingredientName = value, ingredientsMap = map)
     }
 
+    fun addRecipeId(recipe: Recipe) {
+        if (savedRecipes != null) {
+            _selectedRecipes.add(savedRecipes!!.indexOf(recipe))
+            isDeleteIconVisible = true
+        }
+    }
+    fun removeRecipeId(recipe: Recipe) {
+        if (savedRecipes != null) {
+            _selectedRecipes.remove(savedRecipes!!.indexOf(recipe))
+            if (_selectedRecipes.isEmpty()) {
+                isDeleteIconVisible = false
+            }
+        }
+    }
+
+    fun clearSelectedIds() {
+        _selectedRecipes.clear()
+    }
     private suspend fun fetchTextRecipesSearch() {
         recipesTextSearchState = recipesTextSearchState.copy(
             data = null,

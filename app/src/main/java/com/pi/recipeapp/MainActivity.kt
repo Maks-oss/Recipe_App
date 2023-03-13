@@ -23,7 +23,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val googleAuth = GoogleAuth(this)
-        val currentUser = Firebase.auth.currentUser
         setContent {
             RecipeAppTheme {
                AppNavigator(googleAuth)

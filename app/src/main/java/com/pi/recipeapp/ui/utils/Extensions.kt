@@ -15,3 +15,7 @@ fun FirebaseUser?.addSavedRecipesListener(onDataChange: (List<Recipe>?) -> Unit)
         RealtimeDatabaseUtil.addUserRecipesListener(this.uid, onDataChange)
     }
 }
+
+//fun List<Recipe>.toMap(): Map<String, Recipe>> {
+//    val map = mutableMapOf<String, R>()
+//}

@@ -30,6 +30,8 @@ import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.ui.animation.DisplayShimmerEffect
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalBottomSheet
 import com.pi.recipeapp.ui.scaffold_components.showModalSheetState
+import com.pi.recipeapp.ui.screens.saved.SavedRecipesStates
+import com.pi.recipeapp.ui.theme.Purple200
 import com.pi.recipeapp.ui.utils.UiState
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -84,7 +86,11 @@ fun MainScreen(
                 if (recipes.isEmpty())
                     showSnackbar(stringResource(id = R.string.empty_request_error))
                 else
-                    RecipeGridList(Modifier.fillMaxSize(), recipes, navigateToDetailScreen)
+                    RecipeGridList(
+                        Modifier.fillMaxSize(),
+                        recipes,
+                        onRecipeItemClick = navigateToDetailScreen
+                    )
             }
 
             recipeState.errorMessage?.let { error ->
@@ -171,28 +177,39 @@ private fun RecipeTextField(
 fun RecipeGridList(
     modifier: Modifier = Modifier,
     recipes: List<Recipe>,
-    onRecipeItemClick: (Recipe) -> Unit
+    onRecipeItemClick: (Recipe) -> Unit,
+    onRecipeItemLongClick: ((Recipe, isSelected: Boolean) -> Unit)? = null
 ) {
-    val recipeByCategories = recipes.groupBy { it.category }
-    Log.d(
-        "TAG",
-        "RecipeList: ${recipeByCategories.entries.map { listEntry -> listEntry.key to listEntry.value.map { it.name } }}"
-    )
     LazyVerticalGrid(modifier = modifier, columns = GridCells.Fixed(2)) {
-
         items(recipes) {
-            RecipeListItem(it, onRecipeItemClick)
+            RecipeListItem(
+                it,
+                onRecipeItemClick = onRecipeItemClick,
+                onRecipeItemLongClick = onRecipeItemLongClick,
+            )
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RecipeListItem(recipe: Recipe, onRecipeItemClick: (Recipe) -> Unit) {
+fun RecipeListItem(
+    recipe: Recipe,
+    onRecipeItemClick: (Recipe) -> Unit,
+    onRecipeItemLongClick: ((Recipe, isSelected: Boolean) -> Unit)? = null
+) {
+    var isSelected by remember {
+        mutableStateOf(false)
+    }
     Card(
+        backgroundColor = if (isSelected) Purple200 else MaterialTheme.colors.surface,
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth()
-            .clickable(onClick = { onRecipeItemClick(recipe) }), shape = CutCornerShape(16.dp)
+            .combinedClickable(
+                onClick = { onRecipeItemClick(recipe) },
+                onLongClick = { isSelected = !isSelected; onRecipeItemLongClick?.invoke(recipe, isSelected) }),
+        shape = CutCornerShape(16.dp)
     ) {
         Column {
             Image(

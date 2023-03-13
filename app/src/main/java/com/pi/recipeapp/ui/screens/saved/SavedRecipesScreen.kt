@@ -11,8 +11,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.flowlayout.FlowColumn
@@ -23,27 +24,48 @@ import com.pi.recipeapp.ui.screens.main.RecipeGridList
 @Composable
 fun SavedRecipesScreen(
     provideSavedRecipes: () -> List<Recipe>?,
-    onRecipeItemClick: (Recipe) -> Unit
+    onRecipeItemClick: (Recipe) -> Unit,
+    onRecipeItemLongClick: (Recipe, isSelected: Boolean) -> Unit
 ) {
     val savedRecipes = provideSavedRecipes()
+
     if (savedRecipes != null) {
-        SavedRecipeList(recipes = savedRecipes, onRecipeItemClick = onRecipeItemClick)
+        SavedRecipeList(
+            recipes = savedRecipes,
+            onRecipeItemClick = onRecipeItemClick,
+            onRecipeItemLongClick = onRecipeItemLongClick,
+        )
     }
 }
 
 @Composable
-fun SavedRecipeList(recipes: List<Recipe>, onRecipeItemClick: (Recipe) -> Unit) {
+fun SavedRecipeList(
+    recipes: List<Recipe>,
+    onRecipeItemClick: (Recipe) -> Unit,
+    onRecipeItemLongClick: (Recipe, isSelected: Boolean) -> Unit
+) {
     val recipeByCategories = recipes.groupBy { it.category }
-    Log.d(
-        "TAG",
-        "RecipeList: ${recipeByCategories.entries.map { listEntry -> listEntry.key to listEntry.value.map { it.name } }}"
-    )
-    Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+    ) {
         for ((category, recipesList) in recipeByCategories) {
             Column {
-                Text(text = category, style = MaterialTheme.typography.h5, modifier = Modifier.padding(8.dp))
+                Text(
+                    text = category,
+                    style = MaterialTheme.typography.h5,
+                    modifier = Modifier.padding(8.dp)
+                )
                 Divider()
-                RecipeGridList(modifier = Modifier.fillMaxWidth().height(300.dp),recipes = recipesList, onRecipeItemClick = onRecipeItemClick)
+                RecipeGridList(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp),
+                    recipes = recipesList,
+                    onRecipeItemClick = onRecipeItemClick,
+                    onRecipeItemLongClick = onRecipeItemLongClick,
+                )
             }
         }
     }
