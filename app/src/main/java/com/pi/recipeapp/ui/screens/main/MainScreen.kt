@@ -10,12 +10,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -201,16 +204,23 @@ fun RecipeListItem(
     var isSelected by remember {
         mutableStateOf(false)
     }
+    val selectedColor = if (isSystemInDarkTheme()) Color.DarkGray else Color.LightGray
     Card(
-        backgroundColor = if (isSelected) Purple200 else MaterialTheme.colors.surface,
+        backgroundColor = if (isSelected) selectedColor else MaterialTheme.colors.surface,
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth()
             .combinedClickable(
                 onClick = { onRecipeItemClick(recipe) },
-                onLongClick = { isSelected = !isSelected; onRecipeItemLongClick?.invoke(recipe, isSelected) }),
+                onLongClick = {
+                    isSelected = !isSelected; onRecipeItemLongClick?.invoke(
+                    recipe,
+                    isSelected
+                )
+                }),
         shape = CutCornerShape(16.dp)
     ) {
+
         Column {
             Image(
                 painter = rememberAsyncImagePainter(
@@ -230,6 +240,8 @@ fun RecipeListItem(
                 style = MaterialTheme.typography.body1
             )
         }
+
+
     }
 }
 

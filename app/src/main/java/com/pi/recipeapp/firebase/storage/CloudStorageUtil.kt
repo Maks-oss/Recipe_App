@@ -9,9 +9,14 @@ import kotlinx.coroutines.withContext
 
 object CloudStorageUtil {
     private const val TAG = "CloudStorage"
-    lateinit var storageReference : StorageReference
+    lateinit var storageReference: StorageReference
 
-    fun uploadUserImage(userId: String, image: Uri, onSuccess: (Uri) -> Unit, onFailure: (Exception?) -> Unit) {
+    fun uploadUserImage(
+        userId: String,
+        image: Uri,
+        onSuccess: (Uri) -> Unit,
+        onFailure: (Exception?) -> Unit
+    ) {
         val ref = storageReference.child("images/$userId.jpg")
         ref.putFile(image).addOnCompleteListener { task ->
             if (task.isSuccessful) {

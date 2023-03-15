@@ -13,9 +13,12 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.google.accompanist.flowlayout.FlowColumn
 import com.google.accompanist.flowlayout.FlowRow
 import com.pi.recipeapp.data.domain.Recipe
@@ -23,12 +26,13 @@ import com.pi.recipeapp.ui.screens.main.RecipeGridList
 
 @Composable
 fun SavedRecipesScreen(
-    provideSavedRecipes: () -> List<Recipe>?,
+    provideSavedRecipes: () -> List<Recipe?>?,
+    clearSavedRecipesStates: () -> Unit,
     onRecipeItemClick: (Recipe) -> Unit,
     onRecipeItemLongClick: (Recipe, isSelected: Boolean) -> Unit
 ) {
     val savedRecipes = provideSavedRecipes()
-
+    CleanUpSavedRecipeStates(clearSavedRecipesStates)
     if (savedRecipes != null) {
         SavedRecipeList(
             recipes = savedRecipes,
@@ -39,17 +43,35 @@ fun SavedRecipesScreen(
 }
 
 @Composable
+private fun CleanUpSavedRecipeStates(clearSavedRecipesStates: () -> Unit) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                clearSavedRecipesStates()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+}
+
+@Composable
 fun SavedRecipeList(
-    recipes: List<Recipe>,
+    recipes: List<Recipe?>,
     onRecipeItemClick: (Recipe) -> Unit,
     onRecipeItemLongClick: (Recipe, isSelected: Boolean) -> Unit
 ) {
-    val recipeByCategories = recipes.groupBy { it.category }
+    val recipeByCategories = recipes.filterNotNull().groupBy { it.category }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
     ) {
+
         for ((category, recipesList) in recipeByCategories) {
             Column {
                 Text(

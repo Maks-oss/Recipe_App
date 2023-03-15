@@ -53,7 +53,6 @@ class InAppAuth {
                         onFailure = { exc ->
                             onFailure(exc)
                         })
-
                 }
             }
             onSuccess(firebaseUser)

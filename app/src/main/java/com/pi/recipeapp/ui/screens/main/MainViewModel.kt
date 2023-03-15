@@ -38,11 +38,10 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
     var filterContentStates: FilterContentStates by mutableStateOf(FilterContentStates())
         private set
 
-    private val _selectedRecipes: MutableList<Int> = mutableListOf()
-    val selectedRecipesIds: List<Int> by mutableStateOf(_selectedRecipes.toList())
-    var isDeleteIconVisible by mutableStateOf(selectedRecipesIds.isNotEmpty())
+    var savedRecipesStates: SavedRecipesStates by mutableStateOf(SavedRecipesStates())
+        private set
 
-    var savedRecipes: List<Recipe>? by mutableStateOf(null)
+    var savedRecipes: List<Recipe?>? by mutableStateOf(null)
         private set
 
 
@@ -89,6 +88,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
             RealtimeDatabaseUtil.addUserRecipe(currentUser!!.uid, recipe)
         }
     }
+
     fun applyFilter() {
         viewModelScope.launch {
             recipesTextSearchState = if (isFilterNotSelected()) {
@@ -159,24 +159,31 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         filterContentStates = filterContentStates.copy(ingredientName = value, ingredientsMap = map)
     }
 
-    fun addRecipeId(recipe: Recipe) {
+    fun selectRecipe(recipe: Recipe) {
         if (savedRecipes != null) {
-            _selectedRecipes.add(savedRecipes!!.indexOf(recipe))
-            isDeleteIconVisible = true
-        }
-    }
-    fun removeRecipeId(recipe: Recipe) {
-        if (savedRecipes != null) {
-            _selectedRecipes.remove(savedRecipes!!.indexOf(recipe))
-            if (_selectedRecipes.isEmpty()) {
-                isDeleteIconVisible = false
+            val selectedRecipes = savedRecipesStates.selectedRecipes.toMutableList().apply {
+                add(recipe)
             }
+            savedRecipesStates = savedRecipesStates.copy(isDeleteEnabled = true, selectedRecipes)
         }
     }
 
-    fun clearSelectedIds() {
-        _selectedRecipes.clear()
+    fun removeSelectedRecipe(recipe: Recipe) {
+        if (savedRecipes != null) {
+            val removedSelectedRecipes = savedRecipesStates.selectedRecipes.toMutableList().apply {
+                remove(recipe)
+            }
+            savedRecipesStates = savedRecipesStates.copy(
+                isDeleteEnabled = removedSelectedRecipes.isNotEmpty(),
+                selectedRecipes = removedSelectedRecipes
+            )
+        }
     }
+
+    fun clearSavedRecipesState() {
+        savedRecipesStates = savedRecipesStates.copy(false, emptyList())
+    }
+
     private suspend fun fetchTextRecipesSearch() {
         recipesTextSearchState = recipesTextSearchState.copy(
             data = null,
@@ -199,6 +206,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
             )
         }
     }
+
     private fun isFilterNotSelected(): Boolean {
         return filterContentStates.categoriesMap.filter { it.value }
             .isEmpty() && filterContentStates.ingredientsMap.filter { it.value }.isEmpty()

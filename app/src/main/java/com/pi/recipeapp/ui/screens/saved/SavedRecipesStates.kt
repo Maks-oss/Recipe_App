@@ -1,6 +1,8 @@
 package com.pi.recipeapp.ui.screens.saved
 
+import com.pi.recipeapp.data.domain.Recipe
+
 data class SavedRecipesStates(
-    val isSelected: Boolean = false,
-    val selectedRecipeIndices: List<Int> = emptyList()
+    val isDeleteEnabled: Boolean = false,
+    val selectedRecipes: List<Recipe> = emptyList()
 )

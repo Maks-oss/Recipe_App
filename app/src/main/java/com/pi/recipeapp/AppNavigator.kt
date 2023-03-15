@@ -7,8 +7,6 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.*
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -167,12 +165,13 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                     navigationExtension = navigationExtension,
                     coroutineScope = coroutineScope,
                     scaffoldState = scaffoldState,
-                    isDeleteIconVisible = mainViewModel.isDeleteIconVisible,
+                    isDeleteIconVisible = mainViewModel.savedRecipesStates.isDeleteEnabled,
                     onItemDeleteClick = {
                         if (mainViewModel.currentUser != null) {
                             RealtimeDatabaseUtil.deleteUserRecipes(
                                 mainViewModel.currentUser!!.uid,
-                                mainViewModel.selectedRecipesIds
+                                mainViewModel.savedRecipesStates.selectedRecipes,
+                                mainViewModel::clearSavedRecipesState
                             )
                         }
                     }
@@ -182,11 +181,11 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                         onRecipeItemClick = navigationExtension::navigateToRecipeDetailScreen,
                         onRecipeItemLongClick = { recipe, isSelected ->
                             if (isSelected) {
-                                mainViewModel.addRecipeId(recipe)
+                                mainViewModel.selectRecipe(recipe)
                             } else {
-                                mainViewModel.removeRecipeId(recipe)
+                                mainViewModel.removeSelectedRecipe(recipe)
                             }
-                        })
+                        }, clearSavedRecipesStates = mainViewModel::clearSavedRecipesState)
                 }
             }
 

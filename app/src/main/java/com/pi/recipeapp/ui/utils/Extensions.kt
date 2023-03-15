@@ -10,12 +10,8 @@ import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-fun FirebaseUser?.addSavedRecipesListener(onDataChange: (List<Recipe>?) -> Unit) {
+fun FirebaseUser?.addSavedRecipesListener(onDataChange: (List<Recipe?>?) -> Unit) {
     if (this != null) {
         RealtimeDatabaseUtil.addUserRecipesListener(this.uid, onDataChange)
     }
 }
-
-//fun List<Recipe>.toMap(): Map<String, Recipe>> {
-//    val map = mutableMapOf<String, R>()
-//}
