@@ -34,6 +34,7 @@ import com.pi.recipeapp.ui.animation.DisplayShimmerEffect
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalBottomSheet
 import com.pi.recipeapp.ui.scaffold_components.showModalSheetState
 import com.pi.recipeapp.ui.screens.saved.SavedRecipesStates
+import com.pi.recipeapp.ui.theme.ComplexRoundedShape
 import com.pi.recipeapp.ui.theme.Purple200
 import com.pi.recipeapp.ui.utils.UiState
 
@@ -213,12 +214,13 @@ fun RecipeListItem(
             .combinedClickable(
                 onClick = { onRecipeItemClick(recipe) },
                 onLongClick = {
-                    isSelected = !isSelected; onRecipeItemLongClick?.invoke(
-                    recipe,
-                    isSelected
-                )
+                    isSelected = !isSelected
+                    onRecipeItemLongClick?.invoke(
+                        recipe,
+                        isSelected
+                    )
                 }),
-        shape = CutCornerShape(16.dp)
+        shape = ComplexRoundedShape
     ) {
 
         Column {

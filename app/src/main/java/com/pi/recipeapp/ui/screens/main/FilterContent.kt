@@ -133,6 +133,6 @@ private fun CustomFilterChip(text: String, isSelected: Boolean, onChipClick: (()
             null
         },
         colors = ChipDefaults.filterChipColors(selectedBackgroundColor = MaterialTheme.colors.secondary)) {
-        Text(text = text)
+        Text(text = text, style = MaterialTheme.typography.body2)
     }
 }

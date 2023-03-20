@@ -253,7 +253,6 @@ private fun AddIngredients(
     onIngredientsAndMeasuresRemove: (index: Int) -> Unit,
 ) {
     CustomSurfaceWithErrorMessage(
-        shape = CutCornerShape(topEnd = 16.dp, topStart = 16.dp),
         errorMessage = "At least 1 ingredient should be specified",
         isError = isError
     ) {
@@ -361,12 +360,11 @@ private fun AddInstructions(
 fun CustomSurfaceWithErrorMessage(
     errorMessage: String,
     isError: Boolean,
-    shape: Shape = CutCornerShape(16.dp),
     content: @Composable () -> Unit
 ) {
     if (isError) {
         Column {
-            CustomSurface(borderStroke = BorderStroke(1.dp, Color.Red), shape = shape) {
+            CustomSurface(borderStroke = BorderStroke(1.dp, Color.Red)) {
                 content()
             }
             Text(
@@ -377,7 +375,7 @@ fun CustomSurfaceWithErrorMessage(
             )
         }
     } else {
-        CustomSurface(shape) {
+        CustomSurface {
             content()
         }
     }

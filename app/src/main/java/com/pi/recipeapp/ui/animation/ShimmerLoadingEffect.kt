@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.pi.recipeapp.ui.theme.ComplexRoundedShape
 
 @Composable
 fun LoadingShimmerEffect(height: Dp = 200.dp) {
@@ -57,7 +58,7 @@ fun ShimmerGridItem(brush: Brush, height: Dp) {
             .height(height)
             .padding(8.dp)
             .fillMaxWidth()
-            .clip(CutCornerShape(16.dp))
+            .clip(ComplexRoundedShape)
             .background(brush)
     )
 }

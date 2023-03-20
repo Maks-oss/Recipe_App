@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import com.pi.recipeapp.ui.theme.ComplexRoundedShape
 
 @Composable
 fun CreateExpandedItem(text: String, isExpanded: Boolean, onExpandClick: () -> Unit) {
@@ -57,12 +58,11 @@ fun CreateExpandedItem(text: String, isExpanded: Boolean, onExpandClick: () -> U
 
 @Composable
 fun CustomSurface(
-    shape: Shape = CutCornerShape(16.dp),
     borderStroke: BorderStroke? = null,
     content: @Composable () -> Unit
 ) {
     Surface(
-        shape = shape, modifier = Modifier
+        shape = ComplexRoundedShape, modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth(), elevation = 1.dp,
         border = borderStroke
@@ -75,11 +75,10 @@ fun CustomSurface(
 fun CustomSurface(
     modifier: Modifier = Modifier,
     borderStroke: BorderStroke? = null,
-    shape: Shape = CutCornerShape(16.dp),
     content: @Composable () -> Unit
 ) {
     Surface(
-        shape = shape, modifier = modifier, elevation = 1.dp, border = borderStroke
+        shape = ComplexRoundedShape, modifier = modifier, elevation = 1.dp, border = borderStroke
     ) {
         content()
     }

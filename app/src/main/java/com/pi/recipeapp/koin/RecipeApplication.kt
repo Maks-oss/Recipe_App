@@ -18,6 +18,7 @@ class RecipeApplication: Application() {
         super.onCreate()
         RealtimeDatabaseUtil.databaseReference = Firebase.database.reference
         CloudStorageUtil.storageReference = Firebase.storage.reference
+
         startKoin {
             // Koin Android logger
             androidLogger(if (BuildConfig.DEBUG) Level.ERROR else Level.NONE)

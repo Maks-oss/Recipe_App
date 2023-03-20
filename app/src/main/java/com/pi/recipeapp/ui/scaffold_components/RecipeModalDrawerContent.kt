@@ -74,7 +74,7 @@ fun RecipeModalDrawerContent(
             icon = { Icon(imageVector = Icons.Filled.Search, contentDescription = "") },
             text = {
                 Text(
-                    text = "Text Search"
+                    text = "Text Search", style = MaterialTheme.typography.body1
                 )
             },
             modifier = Modifier.clickable { navigateToTextSearchScreen() })
@@ -82,20 +82,20 @@ fun RecipeModalDrawerContent(
             icon = { Icon(imageVector = Icons.Filled.ImageSearch, contentDescription = "") },
             text = {
                 Text(
-                    text = "Image Search"
+                    text = "Image Search", style = MaterialTheme.typography.body1
                 )
             },
             modifier = Modifier.clickable { navigateToImageSearchScreen() })
         ListItem(icon = { Icon(imageVector = Icons.Filled.Edit, contentDescription = "") }, text = {
             Text(
-                text = "Create Recipe"
+                text = "Create Recipe", style = MaterialTheme.typography.body1
             )
         }, modifier = Modifier.clickable { navigateToCreateRecipeScreen() })
         ListItem(
             icon = { Icon(imageVector = Icons.Filled.Folder, contentDescription = "") },
             text = {
                 Text(
-                    text = "Saved Recipes"
+                    text = "Saved Recipes", style = MaterialTheme.typography.body1
                 )
             },
             modifier = Modifier.clickable { navigateToSavedRecipesScreen() })
@@ -105,7 +105,7 @@ fun RecipeModalDrawerContent(
                 icon = { Icon(imageVector = Icons.Filled.Logout, contentDescription = "") },
                 text = {
                     Text(
-                        text = "Sign Out"
+                        text = "Sign Out", style = MaterialTheme.typography.body1
                     )
                 }, modifier = Modifier.clickable { signOut() })
         }
