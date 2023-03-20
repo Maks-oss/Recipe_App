@@ -12,7 +12,6 @@ import androidx.compose.material.Text
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.firebase.authorization.GoogleAuth
-import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import com.pi.recipeapp.ui.screens.imagesearch.RecipeImageSearchScreen
 import com.pi.recipeapp.ui.screens.main.MainScreen
 import com.pi.recipeapp.ui.screens.main.MainViewModel

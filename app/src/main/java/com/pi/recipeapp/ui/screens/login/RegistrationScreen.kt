@@ -26,7 +26,6 @@ import coil.request.ImageRequest
 import coil.size.Size
 import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.R
-import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import com.pi.recipeapp.ui.utils.DisplayTextFieldError
 import com.pi.recipeapp.utils.AuthUtil
 

@@ -4,7 +4,6 @@ import android.app.Application
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
-import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import com.pi.recipeapp.firebase.storage.CloudStorageUtil
 import org.koin.android.BuildConfig
 import org.koin.android.ext.koin.androidContext
@@ -16,7 +15,7 @@ class RecipeApplication: Application() {
 
     override fun onCreate() {
         super.onCreate()
-        RealtimeDatabaseUtil.databaseReference = Firebase.database.reference
+//        RealtimeDatabaseUtil.databaseReference = Firebase.database.reference
         CloudStorageUtil.storageReference = Firebase.storage.reference
 
         startKoin {
@@ -24,7 +23,7 @@ class RecipeApplication: Application() {
             androidLogger(if (BuildConfig.DEBUG) Level.ERROR else Level.NONE)
             //inject Android context
             androidContext(this@RecipeApplication)
-            modules(retrofitModule, repositoryModule, databaseModule,viewModelModule)
+            modules(retrofitModule, repositoryModule, firebaseModule, databaseModule, viewModelModule)
         }
 
     }

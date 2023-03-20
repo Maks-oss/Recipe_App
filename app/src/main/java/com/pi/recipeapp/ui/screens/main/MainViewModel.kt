@@ -10,12 +10,10 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.data.domain.Recipe
-import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchStates
 import com.pi.recipeapp.ui.screens.saved.SavedRecipesStates
 import com.pi.recipeapp.ui.utils.UiState
-import com.pi.recipeapp.ui.utils.addSavedRecipesListener
 import com.pi.recipeapp.utils.Response
 import kotlinx.coroutines.*
 import kotlin.properties.Delegates
@@ -47,7 +45,9 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
 
     var currentRecipe: Recipe? = null
     var currentUser: FirebaseUser? by Delegates.observable(Firebase.auth.currentUser) { _, _, newValue ->
-        newValue.addSavedRecipesListener { savedRecipes = it }
+        if (newValue != null) {
+            recipeRepository.addUserSavedRecipesListener(newValue.uid) { savedRecipes = it }
+        }
     }
 
     private var job: Job? = null
@@ -56,8 +56,8 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
 
     init {
         viewModelScope.launch {
-            val ingredients = recipeRepository.fetchIngredients()
-            val categories = recipeRepository.fetchCategories()
+            val ingredients = recipeRepository.fetchIngredientsFromLocalDb()
+            val categories = recipeRepository.fetchCategoriesFromLocalDb()
             ingredientsMap = filterContentStates.ingredientsMap.toMutableMap().apply {
                 putAll(ingredients.map { it to false }.take(10))
             }
@@ -68,7 +68,9 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
                 ingredientsMap = ingredientsMap,
                 categoriesMap = categoriesMap
             )
-            currentUser.addSavedRecipesListener { savedRecipes = it }
+            if (currentUser != null) {
+                recipeRepository.addUserSavedRecipesListener(currentUser!!.uid) { savedRecipes = it }
+            }
         }
     }
 
@@ -85,7 +87,13 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
 
     fun addUserRecipeToFavourites(recipe: Recipe) {
         if (currentUser != null) {
-            RealtimeDatabaseUtil.addUserRecipe(currentUser!!.uid, recipe)
+            recipeRepository.addRecipeToUserFavorites(currentUser!!.uid, recipe)
+        }
+    }
+
+    fun removeUserRecipesFromFavorites() {
+        if (currentUser != null) {
+            recipeRepository.removeRecipesFromUserFavorites(currentUser!!.uid, savedRecipesStates.selectedRecipes)
         }
     }
 

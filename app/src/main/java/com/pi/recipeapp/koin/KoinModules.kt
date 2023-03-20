@@ -3,6 +3,10 @@ package com.pi.recipeapp.koin
 import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.repository.RecipeRepositoryImpl
 import com.pi.recipeapp.retrofit.RetrofitClient
@@ -35,7 +39,10 @@ val databaseModule = module {
     }
 }
 val repositoryModule = module {
-    single<RecipeRepository> { RecipeRepositoryImpl(get(),get()) }
+    single<RecipeRepository> { RecipeRepositoryImpl(get(),get(), get()) }
+}
+val firebaseModule = module {
+    single { Firebase.database.reference }
 }
 val viewModelModule = module {
     viewModel { MainViewModel(get()) }

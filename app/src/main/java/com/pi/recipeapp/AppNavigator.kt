@@ -16,7 +16,6 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.firebase.authorization.GoogleAuth
 import com.pi.recipeapp.firebase.authorization.InAppAuth
-import com.pi.recipeapp.firebase.database.RealtimeDatabaseUtil
 import com.pi.recipeapp.ui.navigation.NavigationExtension
 
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalDrawerContent
@@ -166,15 +165,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                     coroutineScope = coroutineScope,
                     scaffoldState = scaffoldState,
                     isDeleteIconVisible = mainViewModel.savedRecipesStates.isDeleteEnabled,
-                    onItemDeleteClick = {
-                        if (mainViewModel.currentUser != null) {
-                            RealtimeDatabaseUtil.deleteUserRecipes(
-                                mainViewModel.currentUser!!.uid,
-                                mainViewModel.savedRecipesStates.selectedRecipes,
-                                mainViewModel::clearSavedRecipesState
-                            )
-                        }
-                    }
+                    onItemDeleteClick = mainViewModel::removeUserRecipesFromFavorites
                 ) {
                     SavedRecipesScreen(
                         provideSavedRecipes = mainViewModel::savedRecipes,
