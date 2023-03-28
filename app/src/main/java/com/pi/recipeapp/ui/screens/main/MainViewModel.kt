@@ -94,6 +94,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
     fun removeUserRecipesFromFavorites() {
         if (currentUser != null) {
             recipeRepository.removeRecipesFromUserFavorites(currentUser!!.uid, savedRecipesStates.selectedRecipes)
+            clearSavedRecipesState()
         }
     }
 

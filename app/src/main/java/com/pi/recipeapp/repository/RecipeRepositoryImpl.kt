@@ -57,12 +57,19 @@ class RecipeRepositoryImpl(
 
     override fun addRecipeToUserFavorites(userId: String, recipe: Recipe) {
         val recipeKey = databaseReference.child("users/${userId}").push()
-        cloudStorageUtil.uploadImageToCloud(
-            "recipeImages/${recipeKey.key}.jpg", Uri.parse(recipe.imageUrl), onSuccess = {
-                recipeKey.setValue(recipe.copy(imageUrl = it.toString()))
-            }, onFailure = {
-                Log.e(TAG, "addRecipeToUserFavorites: Uploading recipe image failed ${it?.message}")
-            })
+        if (recipe.category.startsWith("Own")) {
+            cloudStorageUtil.uploadImageToCloud(
+                "recipeImages/${recipeKey.key}.jpg", Uri.parse(recipe.imageUrl), onSuccess = {
+                    recipeKey.setValue(recipe.copy(imageUrl = it.toString()))
+                }, onFailure = {
+                    Log.e(
+                        TAG,
+                        "addRecipeToUserFavorites: Uploading recipe image failed ${it?.message}"
+                    )
+                })
+        } else {
+            recipeKey.setValue(recipe)
+        }
     }
 
     override fun removeRecipesFromUserFavorites(userId: String, recipes: List<Recipe>) {
