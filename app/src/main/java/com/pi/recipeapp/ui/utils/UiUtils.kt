@@ -11,8 +11,14 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -28,6 +34,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.pi.recipeapp.ui.theme.ComplexRoundedShape
+import com.pi.recipeapp.ui.theme.createComplexRoundShapePath
 
 @Composable
 fun CreateExpandedItem(text: String, isExpanded: Boolean, onExpandClick: () -> Unit) {
@@ -61,24 +68,21 @@ fun CustomSurface(
     borderStroke: BorderStroke? = null,
     content: @Composable () -> Unit
 ) {
+    val density = LocalDensity.current
     Surface(
         shape = ComplexRoundedShape, modifier = Modifier
             .padding(8.dp)
-            .fillMaxWidth(), elevation = 1.dp,
-        border = borderStroke
-    ) {
-        content()
-    }
-}
-
-@Composable
-fun CustomSurface(
-    modifier: Modifier = Modifier,
-    borderStroke: BorderStroke? = null,
-    content: @Composable () -> Unit
-) {
-    Surface(
-        shape = ComplexRoundedShape, modifier = modifier, elevation = 1.dp, border = borderStroke
+            .drawBehind {
+                if (borderStroke != null) {
+                    val borderStrokeWidth = with(density) { borderStroke.width.toPx() }
+                    drawPath(
+                        createComplexRoundShapePath(density, size),
+                        brush = borderStroke.brush,
+                        style = Stroke(width = borderStrokeWidth)
+                    )
+                }
+            }
+            .fillMaxWidth(), elevation = 1.dp
     ) {
         content()
     }

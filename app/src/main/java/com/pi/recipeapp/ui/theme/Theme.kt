@@ -33,6 +33,7 @@ val LightColorPalette = lightColors(
 //    background = Color(0xFFF0FFFF)
     background = Color(0xFFFFFFFF)
 )
+
 @Composable
 fun RecipeAppTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable() () -> Unit) {
     val systemUiController = rememberSystemUiController()

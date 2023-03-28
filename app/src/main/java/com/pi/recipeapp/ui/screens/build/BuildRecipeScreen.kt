@@ -364,7 +364,7 @@ fun CustomSurfaceWithErrorMessage(
 ) {
     if (isError) {
         Column {
-            CustomSurface(borderStroke = BorderStroke(1.dp, Color.Red)) {
+            CustomSurface(borderStroke = BorderStroke(2.dp, Color.Red)) {
                 content()
             }
             Text(
