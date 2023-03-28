@@ -1,5 +1,6 @@
 package com.pi.recipeapp.repository
 
+import android.net.Uri
 import android.util.Log
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -12,12 +13,14 @@ import com.pi.recipeapp.retrofit.RecipesService
 import com.pi.recipeapp.room.RecipesDao
 import com.pi.recipeapp.room.entity.Category
 import com.pi.recipeapp.room.entity.Ingredient
+import com.pi.recipeapp.utils.CloudStorageUtil
 import com.pi.recipeapp.utils.Response
 
 class RecipeRepositoryImpl(
     private val recipesService: RecipesService,
     private val recipesDao: RecipesDao,
-    private val databaseReference: DatabaseReference
+    private val databaseReference: DatabaseReference,
+    private val cloudStorageUtil: CloudStorageUtil
 ) : RecipeRepository {
     private val TAG = "RecipeRepository"
     override suspend fun fetchMeals(query: String): Response<List<Recipe>> {
@@ -51,8 +54,15 @@ class RecipeRepositoryImpl(
             Response.Error(exc.message)
         }
     }
+
     override fun addRecipeToUserFavorites(userId: String, recipe: Recipe) {
-       databaseReference.child("users/${userId}").push().setValue(recipe)
+        val recipeKey = databaseReference.child("users/${userId}").push()
+        cloudStorageUtil.uploadImageToCloud(
+            "recipeImages/${recipeKey.key}.jpg", Uri.parse(recipe.imageUrl), onSuccess = {
+                recipeKey.setValue(recipe.copy(imageUrl = it.toString()))
+            }, onFailure = {
+                Log.e(TAG, "addRecipeToUserFavorites: Uploading recipe image failed ${it?.message}")
+            })
     }
 
     override fun removeRecipesFromUserFavorites(userId: String, recipes: List<Recipe>) {
@@ -78,7 +88,10 @@ class RecipeRepositoryImpl(
         })
     }
 
-    override fun addUserSavedRecipesListener(userId: String, onRecipeDataChangeCallback: (List<Recipe?>?) -> Unit) {
+    override fun addUserSavedRecipesListener(
+        userId: String,
+        onRecipeDataChangeCallback: (List<Recipe?>?) -> Unit
+    ) {
         val postListener = object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 val recipes = dataSnapshot.getValue<HashMap<String, Recipe?>>()
@@ -95,17 +108,19 @@ class RecipeRepositoryImpl(
     override suspend fun fetchCategoriesFromLocalDb(): List<String> {
         val categories = recipesDao.getCategories()
         if (categories.isNotEmpty()) return categories
-        return RecipesMapper.convertCategoriesToStringList(recipesService.getCategoriesResponse()).also { categoriesList ->
-            insertCategoriesIntoDatabase(categoriesList)
-        }
+        return RecipesMapper.convertCategoriesToStringList(recipesService.getCategoriesResponse())
+            .also { categoriesList ->
+                insertCategoriesIntoDatabase(categoriesList)
+            }
     }
 
     override suspend fun fetchIngredientsFromLocalDb(): List<String> {
         val ingredients = recipesDao.getIngredients()
         if (ingredients.isNotEmpty()) return ingredients
-        return RecipesMapper.convertIngredientsToStringList(recipesService.getIngredientsResponse()).also { ingredientsList ->
-            insertIngredientsIntoDatabase(ingredientsList)
-        }
+        return RecipesMapper.convertIngredientsToStringList(recipesService.getIngredientsResponse())
+            .also { ingredientsList ->
+                insertIngredientsIntoDatabase(ingredientsList)
+            }
     }
 
     private suspend fun insertIngredientsIntoDatabase(ingredientList: List<String>) {
@@ -118,6 +133,7 @@ class RecipeRepositoryImpl(
             }
         )
     }
+
     private suspend fun insertCategoriesIntoDatabase(categoriesList: List<String>) {
         recipesDao.insertCategories(
             categoriesList.map { category ->

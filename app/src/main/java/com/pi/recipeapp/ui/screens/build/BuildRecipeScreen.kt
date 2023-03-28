@@ -57,7 +57,7 @@ fun BuildRecipeScreen(
     onTextInstructionChange: (String) -> Unit,
     onVideoInstructionChange: (String) -> Unit,
     // TODO when database will be present
-    onConfirmClick: () -> Unit = {}
+    onConfirmClick: (Recipe) -> Unit = {}
 ) {
     val modalSheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden,
@@ -73,7 +73,7 @@ fun BuildRecipeScreen(
                 coroutineScope.launch {
                     modalSheetState.hide()
                 }
-                onConfirmClick()
+                onConfirmClick(it)
             }
         )
     }, modalSheetState = modalSheetState) {

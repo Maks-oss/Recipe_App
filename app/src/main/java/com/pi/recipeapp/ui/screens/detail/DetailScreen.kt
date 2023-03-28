@@ -55,7 +55,7 @@ fun CreatedRecipeDetailPreview(
     recipe: Recipe?,
     provideExpandedValue: () -> Boolean,
     onExpandClick: () -> Unit,
-    onConfirmClick: () -> Unit
+    onConfirmClick: (Recipe) -> Unit
 ) {
     Column {
         Detail(
@@ -66,7 +66,11 @@ fun CreatedRecipeDetailPreview(
         )
         Instructions(recipe)
         OutlinedButton(
-            onClick = onConfirmClick,
+            onClick = {
+                if (recipe != null) {
+                    onConfirmClick(recipe.copy(category = "Own recipes"))
+                }
+            },
             Modifier.padding(8.dp),
             shape = CircleShape,
             border = BorderStroke(1.dp, MaterialTheme.colors.primary)

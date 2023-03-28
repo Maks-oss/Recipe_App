@@ -1,4 +1,4 @@
-package com.pi.recipeapp.firebase.authorization
+package com.pi.recipeapp.auth
 
 import android.net.Uri
 import android.util.Log
@@ -6,12 +6,13 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.pi.recipeapp.firebase.storage.CloudStorageUtil
+import com.google.firebase.storage.StorageReference
+import com.pi.recipeapp.utils.CloudStorageUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class InAppAuth {
+class InAppAuth(private val cloudStorageUtil: CloudStorageUtil) {
     companion object {
         private const val TAG = "InAppAuth"
     }
@@ -44,8 +45,8 @@ class InAppAuth {
             val firebaseUser = auth.currentUser!!
             if (imageUri != null) {
                 CoroutineScope(Dispatchers.Default).launch {
-                    CloudStorageUtil.uploadUserImage(
-                        firebaseUser.uid,
+                    cloudStorageUtil.uploadImageToCloud(
+                        "images/${firebaseUser.uid}.jpg",
                         imageUri,
                         onSuccess = { uri ->
                             updateUserProfile(firebaseUser, uri, onSuccess)
@@ -72,4 +73,6 @@ class InAppAuth {
             onSuccess(user)
         }
     }
+
+
 }

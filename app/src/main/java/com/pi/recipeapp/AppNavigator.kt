@@ -14,8 +14,8 @@ import androidx.navigation.navigation
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.pi.recipeapp.firebase.authorization.GoogleAuth
-import com.pi.recipeapp.firebase.authorization.InAppAuth
+import com.pi.recipeapp.auth.GoogleAuth
+import com.pi.recipeapp.auth.InAppAuth
 import com.pi.recipeapp.ui.navigation.NavigationExtension
 
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalDrawerContent
@@ -32,11 +32,14 @@ import com.pi.recipeapp.ui.screens.saved.SavedRecipesScreen
 import com.pi.recipeapp.utils.Routes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.get
 import org.koin.androidx.compose.getViewModel
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun AppNavigator(googleAuth: GoogleAuth) {
+fun AppNavigator() {
+    val googleAuth = get<GoogleAuth>()
+    val inAppAuth = get<InAppAuth>()
     val navController = rememberNavController()
     val mainViewModel = getViewModel<MainViewModel>()
     val buildRecipeViewModel = getViewModel<BuildRecipeViewModel>()
@@ -52,12 +55,9 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                 onSuccess = { user ->
                     onAuthorizationSuccess(mainViewModel, user, navigationExtension)
                 }, onFailure = { exc ->
-                    coroutineScope.launch {
-                        scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
-                    }
+                    showSnackbarMessage(coroutineScope, scaffoldState, "Authorization failed ${exc?.message}")
                 })
         })
-    val inAppAuth = InAppAuth()
 
     val startDestination =
         if (mainViewModel.currentUser == null) Routes.LoginScreenRoute.route else Routes.RecipeDrawerGraphRoute.route
@@ -72,9 +72,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                     inAppAuth.signIn(email, password, onSuccess = { user ->
                         onAuthorizationSuccess(mainViewModel, user, navigationExtension)
                     }, onFailure = { exc ->
-                        coroutineScope.launch {
-                            scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
-                        }
+                        showSnackbarMessage(coroutineScope, scaffoldState, "Authorization failed ${exc?.message}")
                     })
                 })
             }
@@ -89,9 +87,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                             popUpRoute = Routes.LoginScreenRoute.route
                         )
                     }, onFailure = { exc ->
-                        coroutineScope.launch {
-                            scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
-                        }
+                        showSnackbarMessage(coroutineScope, scaffoldState, "Authorization failed ${exc?.message}")
                     })
                 })
             }
@@ -114,9 +110,7 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                         onApplyFilterClick = mainViewModel::applyFilter,
                         navigateToDetailScreen = navigationExtension::navigateToRecipeDetailScreen,
                         showSnackbar = { message ->
-                            coroutineScope.launch {
-                                scaffoldState.snackbarHostState.showSnackbar(message)
-                            }
+                            showSnackbarMessage(coroutineScope, scaffoldState, message)
                         })
                 }
             }
@@ -155,7 +149,11 @@ fun AppNavigator(googleAuth: GoogleAuth) {
                         onIngredientsAndMeasuresRemove = buildRecipeViewModel::removeIngredientAndMeasure,
                         onTextInstructionChange = buildRecipeViewModel::changeTextInstruction,
                         onVideoInstructionChange = buildRecipeViewModel::changeVideoInstruction,
-                        onConfirmClick = buildRecipeViewModel::resetBuildRecipeState
+                        onConfirmClick = {
+                            buildRecipeViewModel.resetBuildRecipeState()
+                            mainViewModel.addUserRecipeToFavourites(it)
+                            showSnackbarMessage(coroutineScope, scaffoldState, "Recipe was successfully added!")
+                        }
                     )
                 }
             }
@@ -190,6 +188,17 @@ fun AppNavigator(googleAuth: GoogleAuth) {
 
             }
         }
+    }
+}
+
+private fun showSnackbarMessage(
+    coroutineScope: CoroutineScope,
+    scaffoldState: ScaffoldState,
+    message: String
+) {
+    coroutineScope.launch {
+//        scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
+        scaffoldState.snackbarHostState.showSnackbar(message)
     }
 }
 
