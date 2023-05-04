@@ -1,8 +1,10 @@
 package com.pi.recipeapp
 
 import android.annotation.SuppressLint
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.material.Scaffold
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberScaffoldState
@@ -35,6 +37,7 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.get
 import org.koin.androidx.compose.getViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun AppNavigator() {
@@ -138,6 +141,10 @@ fun AppNavigator() {
                 ) {
                     BuildRecipeScreen(
                         buildRecipeStates = buildRecipeViewModel.buildRecipeStates,
+                        onGeneratedRecipeInputChange = buildRecipeViewModel::onGenerationRecipeInputChange,
+                        generatedRecipeInput = buildRecipeViewModel.generateRecipeText,
+                        generateRecipe = buildRecipeViewModel::generateRecipe,
+                        generatedRecipeState = buildRecipeViewModel.generatedRecipeState,
                         applyRecipe = buildRecipeViewModel::changeRecipe,
                         onExpandValueChange = buildRecipeViewModel::changeExpanded,
                         onRecipeNameTextChange = buildRecipeViewModel::changeRecipeName,

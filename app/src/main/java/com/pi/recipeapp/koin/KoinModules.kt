@@ -6,6 +6,7 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import com.pi.recipeapp.auth.GoogleAuth
 import com.pi.recipeapp.auth.InAppAuth
+import com.pi.recipeapp.repository.RecipeGeneratorRepository
 import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.repository.RecipeRepositoryImpl
 import com.pi.recipeapp.retrofit.RetrofitClient
@@ -13,6 +14,7 @@ import com.pi.recipeapp.room.RecipesDatabase
 import com.pi.recipeapp.ui.screens.build.BuildRecipeViewModel
 import com.pi.recipeapp.ui.screens.main.MainViewModel
 import com.pi.recipeapp.utils.CloudStorageUtil
+import com.theokanning.openai.service.OpenAiService
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -42,6 +44,7 @@ val authModule = module {
 }
 val repositoryModule = module {
     single<RecipeRepository> { RecipeRepositoryImpl(get(), get(), get(), get()) }
+    single<RecipeGeneratorRepository> { RecipeGeneratorRepository(OpenAiService("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")) }
 }
 val firebaseModule = module {
     single { Firebase.database.reference }
@@ -50,5 +53,5 @@ val firebaseModule = module {
 }
 val viewModelModule = module {
     viewModel { MainViewModel(get()) }
-    viewModel { BuildRecipeViewModel() }
+    viewModel { BuildRecipeViewModel(get()) }
 }

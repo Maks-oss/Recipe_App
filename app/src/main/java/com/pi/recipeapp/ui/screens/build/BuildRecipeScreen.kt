@@ -8,17 +8,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Backspace
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -29,14 +30,18 @@ import coil.request.ImageRequest
 import coil.size.Size
 import com.pi.recipeapp.R
 import com.pi.recipeapp.data.domain.Recipe
+import com.pi.recipeapp.ui.animation.DisplayShimmerEffect
+import com.pi.recipeapp.ui.animation.LoadingShimmerEffect
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalBottomSheet
 import com.pi.recipeapp.ui.scaffold_components.showModalSheetState
 import com.pi.recipeapp.ui.screens.CreatedRecipeDetailPreview
 import com.pi.recipeapp.ui.utils.BlankTextField
 import com.pi.recipeapp.ui.utils.CustomSurface
 import com.pi.recipeapp.ui.utils.CustomTabs
+import com.pi.recipeapp.ui.utils.UiState
 import com.pi.recipeapp.utils.AppConstants
 import com.pi.recipeapp.utils.InstructionTabsConstants
+import com.pi.recipeapp.utils.RecipeBuilderTabsConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -45,6 +50,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun BuildRecipeScreen(
     buildRecipeStates: BuildRecipeStates,
+    generatedRecipeInput: String,
+    onGeneratedRecipeInputChange: (String) -> Unit,
+    generateRecipe: () -> Unit,
+    generatedRecipeState: UiState<Recipe?>,
     applyRecipe: (Recipe) -> Unit,
     onExpandValueChange: () -> Unit,
     onRecipeNameTextChange: (String) -> Unit,
@@ -77,30 +86,114 @@ fun BuildRecipeScreen(
             }
         )
     }, modalSheetState = modalSheetState) {
+        var tabIndex by remember { mutableStateOf(0) }
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .fillMaxSize()
         ) {
-            RecipeBuilder(
-                coroutineScope,
-                buildRecipeStates,
-                modalSheetState,
-                applyRecipe,
-                onRecipeNameTextChange,
-                onRecipeUriChange,
-                onRecipeImageChange,
-                onIngredientsAndMeasuresAdd,
-                onIngredientChange,
-                onMeasureChange,
-                onIngredientsAndMeasuresRemove,
-                onTextInstructionChange,
-                onVideoInstructionChange
-            )
+            CustomTabs(
+                titles = listOf("Build Recipe", "Generate Recipe"),
+                state = tabIndex,
+                onTabClick = { index ->
+                    tabIndex = index
+                })
+            when (tabIndex) {
+                RecipeBuilderTabsConstants.OWN_RECIPE -> RecipeBuilder(
+                    coroutineScope,
+                    buildRecipeStates,
+                    modalSheetState,
+                    applyRecipe,
+                    onRecipeNameTextChange,
+                    onRecipeUriChange,
+                    onRecipeImageChange,
+                    onIngredientsAndMeasuresAdd,
+                    onIngredientChange,
+                    onMeasureChange,
+                    onIngredientsAndMeasuresRemove,
+                    onTextInstructionChange,
+                    onVideoInstructionChange
+                )
+                RecipeBuilderTabsConstants.GENERATED_RECIPE -> RecipeGeneration(
+                    generatedRecipeInput,
+                    onGeneratedRecipeInputChange,
+                    generateRecipe,
+                    generatedRecipeState
+                )
+            }
+
         }
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun ColumnScope.RecipeGeneration(
+    generatedRecipeInput: String,
+    onGeneratedRecipeInputChange: (String) -> Unit,
+    generateRecipe: () -> Unit,
+    generatedRecipeState: UiState<Recipe?>
+) {
+
+    OutlinedTextField(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        value = generatedRecipeInput,
+        onValueChange = { onGeneratedRecipeInputChange(it) },
+        label = { Text(text = "Enter ingredients...") },
+        shape = CircleShape
+    )
+    Button(
+        onClick = { generateRecipe() }, modifier = Modifier
+            .align(Alignment.End)
+            .padding(8.dp), shape = CircleShape
+    ) {
+        Text(text = "Generate")
+    }
+    val generatedRecipe = generatedRecipeState.data
+    val isLoading = generatedRecipeState.isLoading
+    if (isLoading) {
+        LoadingShimmerEffect(500.dp)
+    }
+    if (generatedRecipe != null && !isLoading) {
+        CustomSurface {
+            Column {
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(generatedRecipe.imageUrl)
+                            .size(Size.ORIGINAL)
+                            .build()
+                    ),
+                    contentDescription = "",
+                    modifier = Modifier
+                        .height(300.dp)
+                        .fillMaxWidth(),
+                    contentScale = ContentScale.Crop
+                )
+                TextButton(onClick = { //TODO
+                     }) {
+                    Row {
+                        Icon(imageVector = Icons.Outlined.Favorite, contentDescription = "")
+                        Spacer(modifier = Modifier.padding(8.dp))
+                        Text(text = "Add to favourites")
+                    }
+                }
+                Text(
+                    modifier = Modifier.padding(8.dp),
+                    text = generatedRecipe.name,
+                    style = MaterialTheme.typography.h6,
+                )
+                Text(
+                    text = generatedRecipe.instruction, style = MaterialTheme.typography.body1,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        }
+    }
+
+}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable

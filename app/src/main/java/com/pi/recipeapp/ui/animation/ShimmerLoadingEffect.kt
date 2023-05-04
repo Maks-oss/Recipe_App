@@ -71,3 +71,4 @@ fun DisplayShimmerEffect(itemsCount: Int = 10) {
         }
     }
 }
+

@@ -1,19 +1,53 @@
 package com.pi.recipeapp.ui.screens.build
 
 import android.graphics.Bitmap
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.pi.recipeapp.data.domain.Recipe
-import com.pi.recipeapp.ui.screens.main.MainViewModelStates
+import com.pi.recipeapp.mapper.GeneratedRecipesMapper
+import com.pi.recipeapp.repository.RecipeGeneratorRepository
+import com.pi.recipeapp.ui.utils.UiState
+import kotlinx.coroutines.launch
 
-class BuildRecipeViewModel: ViewModel() {
+class BuildRecipeViewModel(private val recipeGeneratorRepository: RecipeGeneratorRepository) :
+    ViewModel() {
     var buildRecipeStates: BuildRecipeStates by mutableStateOf(BuildRecipeStates())
+        private set
+    var generateRecipeText by mutableStateOf("")
+        private set
+    var generatedRecipeState by mutableStateOf(UiState<Recipe?>())
         private set
 
     fun saveRecipeToDb() {
         // TODO Save created recipe to database
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun generateRecipe() {
+        generatedRecipeState = generatedRecipeState.copy(data = null, isLoading = true)
+        viewModelScope.launch {
+            val preProcessed = generateRecipeText.replace(" ", ",")
+            val recipe =
+                recipeGeneratorRepository.generateRecipe(preProcessed)
+            val recipeImage = recipeGeneratorRepository.generateImage(
+                preProcessed + GeneratedRecipesMapper.getRecipeName(recipe)
+            )
+            generatedRecipeState = generatedRecipeState.copy(
+                GeneratedRecipesMapper.convertGeneratedRecipeToRecipe(
+                    preProcessed + recipe,
+                    recipeImage
+                ), isLoading = false
+            )
+        }
+    }
+
+    fun onGenerationRecipeInputChange(value: String) {
+        generateRecipeText = value
     }
 
     fun resetBuildRecipeState() {
