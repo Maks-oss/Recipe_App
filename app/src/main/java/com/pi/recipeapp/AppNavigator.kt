@@ -104,13 +104,8 @@ fun AppNavigator() {
                 ) {
                     MainScreen(
                         provideSearchInput = mainViewModel.mainViewModelStates::recipeSearchInput,
-                        provideFilterContentStates = mainViewModel::filterContentStates,
                         provideRecipesState = mainViewModel::recipesTextSearchState,
                         onSearchInputChange = mainViewModel::onRecipeSearchInputChange,
-                        onFilterIngredientNameChangeValue = mainViewModel::changeIngredientName,
-                        onFilterCategoriesMapChangeValue = mainViewModel::changeCategoriesMapValue,
-                        onFilterIngredientsMapChangeValue = mainViewModel::changeIngredientsMapValue,
-                        onApplyFilterClick = mainViewModel::applyFilter,
                         navigateToDetailScreen = navigationExtension::navigateToRecipeDetailScreen,
                         showSnackbar = { message ->
                             showSnackbarMessage(coroutineScope, scaffoldState, message)

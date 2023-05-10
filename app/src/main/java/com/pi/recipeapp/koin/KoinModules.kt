@@ -4,6 +4,7 @@ import androidx.room.Room
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import com.pi.recipeapp.BuildConfig
 import com.pi.recipeapp.auth.GoogleAuth
 import com.pi.recipeapp.auth.InAppAuth
 import com.pi.recipeapp.repository.RecipeGeneratorRepository
@@ -44,7 +45,7 @@ val authModule = module {
 }
 val repositoryModule = module {
     single<RecipeRepository> { RecipeRepositoryImpl(get(), get(), get(), get()) }
-    single<RecipeGeneratorRepository> { RecipeGeneratorRepository(OpenAiService("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")) }
+    single<RecipeGeneratorRepository> { RecipeGeneratorRepository(OpenAiService(BuildConfig.openApiKey)) }
 }
 val firebaseModule = module {
     single { Firebase.database.reference }

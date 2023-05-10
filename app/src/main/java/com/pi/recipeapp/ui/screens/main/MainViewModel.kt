@@ -33,9 +33,6 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
     var imageSearchStates: ImageSearchStates by mutableStateOf(ImageSearchStates())
         private set
 
-    var filterContentStates: FilterContentStates by mutableStateOf(FilterContentStates())
-        private set
-
     var savedRecipesStates: SavedRecipesStates by mutableStateOf(SavedRecipesStates())
         private set
 
@@ -56,20 +53,10 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
 
     init {
         viewModelScope.launch {
-            val ingredients = recipeRepository.fetchIngredientsFromLocalDb()
-            val categories = recipeRepository.fetchCategoriesFromLocalDb()
-            ingredientsMap = filterContentStates.ingredientsMap.toMutableMap().apply {
-                putAll(ingredients.map { it to false }.take(10))
-            }
-            val categoriesMap = filterContentStates.categoriesMap.toMutableMap().apply {
-                putAll(categories.map { it to false })
-            }
-            filterContentStates = filterContentStates.copy(
-                ingredientsMap = ingredientsMap,
-                categoriesMap = categoriesMap
-            )
             if (currentUser != null) {
-                recipeRepository.addUserSavedRecipesListener(currentUser!!.uid) { savedRecipes = it }
+                recipeRepository.addUserSavedRecipesListener(currentUser!!.uid) {
+                    savedRecipes = it
+                }
             }
         }
     }
@@ -93,21 +80,13 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
 
     fun removeUserRecipesFromFavorites() {
         if (currentUser != null) {
-            recipeRepository.removeRecipesFromUserFavorites(currentUser!!.uid, savedRecipesStates.selectedRecipes)
+            recipeRepository.removeRecipesFromUserFavorites(
+                currentUser!!.uid,
+                savedRecipesStates.selectedRecipes
+            )
             clearSavedRecipesState()
         }
     }
-
-    fun applyFilter() {
-        viewModelScope.launch {
-            recipesTextSearchState = if (isFilterNotSelected()) {
-                recipesTextSearchState.copy(data = textRecipeResultList)
-            } else {
-                recipesTextSearchState.copy(data = filterRecipes())
-            }
-        }
-    }
-
 
     suspend fun fetchImageRecipesSearch(name: String) {
         recipesImageSearchState = recipesImageSearchState.copy(
@@ -143,29 +122,6 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
 
     fun changeImageSearchRecipeName(name: String) {
         imageSearchStates = imageSearchStates.copy(recipeName = name)
-    }
-
-    fun changeIngredientsMapValue(key: String) {
-        val map = filterContentStates.ingredientsMap.toMutableMap().apply {
-            this[key] = !this[key]!!
-        }
-        filterContentStates = filterContentStates.copy(ingredientsMap = map)
-    }
-
-    fun changeCategoriesMapValue(key: String) {
-        val map = filterContentStates.categoriesMap.toMutableMap().apply {
-            this[key] = !this[key]!!
-        }
-        filterContentStates = filterContentStates.copy(categoriesMap = map)
-    }
-
-    fun changeIngredientName(value: String) {
-        val map = if (value.isEmpty()) {
-            ingredientsMap
-        } else {
-            filterContentStates.ingredientsMap.filter { it.key.contains(value, ignoreCase = true) }
-        }
-        filterContentStates = filterContentStates.copy(ingredientName = value, ingredientsMap = map)
     }
 
     fun selectRecipe(recipe: Recipe) {
@@ -204,7 +160,7 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         delay(1000)
         recipesTextSearchState = when (result) {
             is Response.Success -> recipesTextSearchState.copy(
-                data = if (isFilterNotSelected()) result.data else filterRecipes(),
+                data = result.data,
                 isLoading = false,
                 errorMessage = null
             )
@@ -216,36 +172,5 @@ class MainViewModel(private val recipeRepository: RecipeRepository) :
         }
     }
 
-    private fun isFilterNotSelected(): Boolean {
-        return filterContentStates.categoriesMap.filter { it.value }
-            .isEmpty() && filterContentStates.ingredientsMap.filter { it.value }.isEmpty()
-    }
-
-    private suspend fun filterRecipes(): List<Recipe> = withContext(Dispatchers.Default) {
-        val ingredients = filterContentStates.ingredientsMap.filter { it.value }.keys
-        val categories = filterContentStates.categoriesMap.filter { it.value }.keys
-        val newList = mutableListOf<Recipe>()
-        if (textRecipeResultList != null) {
-            for (recipe in textRecipeResultList!!) {
-                var isIngredientAbsent = false
-                for (ingredient in ingredients) {
-                    if (ingredient !in recipe.ingredients.keys) {
-                        isIngredientAbsent = true
-                        break
-                    }
-                }
-                if (isIngredientAbsent) {
-                    continue
-                }
-                if (categories.isNotEmpty() && recipe.category in categories) {
-                    newList.add(recipe)
-                } else if (categories.isEmpty()) {
-                    newList.add(recipe)
-                }
-            }
-        }
-
-        return@withContext newList
-    }
 
 }

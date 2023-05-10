@@ -41,68 +41,42 @@ import com.pi.recipeapp.ui.utils.UiState
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(
-    provideFilterContentStates: () -> FilterContentStates,
     provideSearchInput: () -> String,
     provideRecipesState: () -> UiState<List<Recipe>>,
-    onApplyFilterClick: () -> Unit,
     onSearchInputChange: (String) -> Unit,
-    onFilterIngredientsMapChangeValue: (key: String) -> Unit,
-    onFilterCategoriesMapChangeValue: (key: String) -> Unit,
-    onFilterIngredientNameChangeValue: (name: String) -> Unit,
     navigateToDetailScreen: (Recipe) -> Unit,
     showSnackbar: (String) -> Unit
 ) {
     val recipeState = provideRecipesState()
-    val modalSheetState = rememberModalBottomSheetState(
-        initialValue = ModalBottomSheetValue.Hidden,
-        confirmStateChange = { it != ModalBottomSheetValue.HalfExpanded },
-    )
+    Column(
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        RecipeTextField(
+            recipeSearchInput = provideSearchInput,
+            onValueChange = onSearchInputChange,
+        )
+        Spacer(modifier = Modifier.padding(8.dp))
 
-    val coroutineScope = rememberCoroutineScope()
-
-    RecipeModalBottomSheet(modalSheetState = modalSheetState, sheetContent = {
-        FilterContent(
-            provideFilterContentStates = provideFilterContentStates,
-            onFilterIngredientNameChangeValue = onFilterIngredientNameChangeValue,
-            onFilterCategoriesMapChangeValue = onFilterCategoriesMapChangeValue,
-            onFilterIngredientsMapChangeValue = onFilterIngredientsMapChangeValue,
-            onApplyFilterClick = {
-                onApplyFilterClick()
-                coroutineScope.showModalSheetState(modalSheetState)
-            })
-    }) {
-        Column(
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            RecipeTextField(
-                recipeSearchInput = provideSearchInput,
-                onValueChange = onSearchInputChange,
-                showFilterSheet = {
-                    coroutineScope.showModalSheetState(modalSheetState)
-                }
-            )
-            Spacer(modifier = Modifier.padding(8.dp))
-
-            if (recipeState.isLoading) {
-                DisplayShimmerEffect()
-            }
-            recipeState.data?.let { recipes ->
-                if (recipes.isEmpty())
-                    showSnackbar(stringResource(id = R.string.empty_request_error))
-                else
-                    RecipeGridList(
-                        Modifier.fillMaxSize(),
-                        recipes,
-                        onRecipeItemClick = navigateToDetailScreen
-                    )
-            }
-
-            recipeState.errorMessage?.let { error ->
-                showSnackbar(error)
-            }
-
+        if (recipeState.isLoading) {
+            DisplayShimmerEffect()
         }
+        recipeState.data?.let { recipes ->
+            if (recipes.isEmpty())
+                showSnackbar(stringResource(id = R.string.empty_request_error))
+            else
+                RecipeGridList(
+                    Modifier.fillMaxSize(),
+                    recipes,
+                    onRecipeItemClick = navigateToDetailScreen
+                )
+        }
+
+        recipeState.errorMessage?.let { error ->
+            showSnackbar(error)
+        }
+
     }
+
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -110,71 +84,25 @@ fun MainScreen(
 private fun RecipeTextField(
     recipeSearchInput: () -> String,
     onValueChange: (String) -> Unit,
-    showFilterSheet: () -> Unit
 ) {
-    var isCancelVisible by remember {
-        mutableStateOf(false)
-    }
-    var isFilterVisible by remember {
-        mutableStateOf(false)
-    }
-    val focusManager = LocalFocusManager.current
     val textInput = recipeSearchInput()
-    Row(
+
+    OutlinedTextField(
+        value = textInput,
+        onValueChange = { textValue ->
+            onValueChange(textValue)
+        },
+        label = { Text(text = "Enter name...") },
+        leadingIcon = {
+            Icon(imageVector = Icons.Filled.Search, contentDescription = "recipe search")
+        },
+        shape = CircleShape,
         modifier = Modifier
             .padding(8.dp)
-            .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
-    ) {
+            .fillMaxWidth()
+    )
 
-        OutlinedTextField(
-            value = textInput,
-            onValueChange = { textValue ->
-                isFilterVisible = textValue.isNotEmpty()
-                onValueChange(textValue)
-            },
-            label = { Text(text = "Enter name...") },
-            leadingIcon = {
-                Icon(imageVector = Icons.Filled.Search, contentDescription = "recipe search")
-            },
-            shape = CircleShape,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f, false)
-                .animateContentSize()
-                .onFocusChanged { focusState ->
-                    isCancelVisible = focusState.isFocused
-                    if (focusState.isFocused && textInput.isNotEmpty()) {
-                        isFilterVisible = true
-                    } else if (!focusState.isFocused) {
-                        isFilterVisible = false
-                    }
-                },
-        )
-        AnimatedVisibility(visible = isCancelVisible) {
-            TextButton(
-                onClick = { focusManager.clearFocus() }, modifier = Modifier
-                    .weight(1f, false)
-                    .align(Alignment.CenterVertically)
-            ) {
-                Text(
-                    text = "Cancel",
-                    style = MaterialTheme.typography.subtitle1,
-                )
-            }
-        }
-        AnimatedVisibility(visible = isFilterVisible) {
-            Icon(
-                imageVector = Icons.Outlined.FilterAlt,
-                contentDescription = "",
-                modifier = Modifier
-                    .weight(1f, false)
-                    .size(25.dp)
-                    .clickable {
-                        showFilterSheet()
-                    }
-            )
-        }
-    }
+
 }
 
 @Composable
