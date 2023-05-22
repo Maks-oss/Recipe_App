@@ -2,6 +2,7 @@ package com.pi.recipeapp.ui.screens.build
 
 import android.graphics.Bitmap
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,10 +12,14 @@ import androidx.lifecycle.viewModelScope
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.mapper.GeneratedRecipesMapper
 import com.pi.recipeapp.repository.RecipeGeneratorRepository
+import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.ui.utils.UiState
 import kotlinx.coroutines.launch
 
-class BuildRecipeViewModel(private val recipeGeneratorRepository: RecipeGeneratorRepository) :
+class BuildRecipeViewModel(
+    private val recipeGeneratorRepository: RecipeGeneratorRepository,
+    private val recipeRepository: RecipeRepository
+) :
     ViewModel() {
     var buildRecipeStates: BuildRecipeStates by mutableStateOf(BuildRecipeStates())
         private set
@@ -23,8 +28,9 @@ class BuildRecipeViewModel(private val recipeGeneratorRepository: RecipeGenerato
     var generatedRecipeState by mutableStateOf(UiState<Recipe?>())
         private set
 
-    fun saveRecipeToDb() {
-        // TODO Save created recipe to database
+    fun saveRecipeToDb(recipe: Recipe) {
+        Log.d("TAG", "saveRecipeToDb: $recipe")
+        recipeRepository.addRecipeToUserFavorites(recipe)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)

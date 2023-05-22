@@ -38,6 +38,7 @@ import com.pi.recipeapp.ml.LiteModelAiyVisionClassifierFoodV11
 import com.pi.recipeapp.ui.utils.UiState
 import com.pi.recipeapp.ui.utils.CustomSurface
 import com.pi.recipeapp.ui.utils.HyperlinkText
+import kotlinx.coroutines.launch
 import org.tensorflow.lite.support.image.TensorImage
 
 @Composable
@@ -91,46 +92,51 @@ fun RecipeImageSearchScreen(
                         .size(height = 400.dp, width = LocalConfiguration.current.screenWidthDp.dp)
                         .align(Alignment.CenterHorizontally)
                 )
-
-                LaunchedEffect(imageBitmap) {
-                    try {
-                        changeRecipeName(getTFSearchResult(imageBitmap, context))
-                    } catch (exc: Exception) {
-                        Toast.makeText(context, exc.message, Toast.LENGTH_LONG).show()
-                        changeRecipeName("")
+                if (imageBitmap != null) {
+                    LaunchedEffect(imageBitmap) {
+                        try {
+                            val tfRecipeName = getTFSearchResult(imageBitmap, context)
+                            loadRecipes(tfRecipeName)
+                            changeRecipeName(tfRecipeName)
+                        } catch (exc: Exception) {
+                            Toast.makeText(context, exc.message, Toast.LENGTH_LONG).show()
+                            changeRecipeName("")
+                        }
                     }
-                }
-
-                if (recipeName.isNotEmpty()) {
-                    LaunchedEffect(recipeName) {
-                        loadRecipes(recipeName)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = recipeName, style = MaterialTheme.typography.h6)
-                        HyperlinkText(
-                            modifier = Modifier.align(Alignment.CenterVertically),
-                            fullText = "See on website",
-                            linkText = listOf("See on website"),
-                            hyperlinks = listOf("https://www.allrecipes.com/search?q=$recipeName")
-                        )
-                    }
-                    if (recipesImageSearchState.isLoading) {
-                        LinearProgressIndicator(
-                            modifier = Modifier
-                                .padding(vertical = 8.dp)
-                                .fillMaxSize()
-                        )
-                    } else {
-                        ShowRecipeResults(recipesImageSearchState, navigateToDetailScreen)
-                    }
-
+                    ShowDish(recipeName, recipesImageSearchState, navigateToDetailScreen)
                 }
             }
         }
         ImageSearchButtons(takePictureFromCamera, takePictureFromFolder)
+    }
+}
+
+@Composable
+private fun ShowDish(
+    recipeName: String,
+    recipesImageSearchState: UiState<List<Recipe>>,
+    navigateToDetailScreen: (Recipe) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = recipeName, style = MaterialTheme.typography.h6)
+        HyperlinkText(
+            modifier = Modifier.align(Alignment.CenterVertically),
+            fullText = "See on website",
+            linkText = listOf("See on website"),
+            hyperlinks = listOf("https://www.allrecipes.com/search?q=$recipeName")
+        )
+    }
+    if (recipesImageSearchState.isLoading) {
+        LinearProgressIndicator(
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+                .fillMaxSize()
+        )
+    } else {
+        ShowRecipeResults(recipesImageSearchState, navigateToDetailScreen)
     }
 }
 
@@ -185,16 +191,18 @@ private fun getTFSearchResult(
         model.close()
     }
     return recipeName
+
 }
 
 @Composable
 private fun ImageSearchButtons(
     takePictureFromCamera: ManagedActivityResultLauncher<Void?, Bitmap?>,
-    takePictureFromFolder: ManagedActivityResultLauncher<String, Uri?>
+    takePictureFromFolder: ManagedActivityResultLauncher<String, Uri?>,
+//    changeName: (String) -> Unit
 ) {
     Row(modifier = Modifier.padding(8.dp)) {
         Button(
-            onClick = { takePictureFromCamera.launch() },
+            onClick = { takePictureFromCamera.launch();  },
             shape = CircleShape,
             border = BorderStroke(1.dp, MaterialTheme.colors.primary)
         ) {
@@ -206,7 +214,7 @@ private fun ImageSearchButtons(
         }
         Spacer(modifier = Modifier.padding(4.dp))
         OutlinedButton(
-            onClick = { takePictureFromFolder.launch("image/*") },
+            onClick = { takePictureFromFolder.launch("image/*");  },
             shape = CircleShape,
             border = BorderStroke(1.dp, MaterialTheme.colors.primary)
         ) {

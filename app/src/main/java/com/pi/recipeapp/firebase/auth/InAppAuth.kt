@@ -1,4 +1,4 @@
-package com.pi.recipeapp.auth
+package com.pi.recipeapp.firebase.auth
 
 import android.net.Uri
 import android.util.Log
@@ -6,8 +6,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.StorageReference
-import com.pi.recipeapp.utils.CloudStorageUtil
+import com.pi.recipeapp.firebase.utils.CloudStorageUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

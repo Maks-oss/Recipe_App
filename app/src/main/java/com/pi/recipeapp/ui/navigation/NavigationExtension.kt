@@ -3,7 +3,7 @@ package com.pi.recipeapp.ui.navigation
 import androidx.compose.material.ScaffoldState
 import androidx.navigation.NavController
 import com.pi.recipeapp.data.domain.Recipe
-import com.pi.recipeapp.ui.screens.main.MainViewModel
+import com.pi.recipeapp.ui.screens.main.TextSearchViewModel
 import com.pi.recipeapp.utils.Routes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 class NavigationExtension(
     private val coroutineScope: CoroutineScope,
     private val scaffoldState: ScaffoldState,
-    private val mainViewModel: MainViewModel,
+    private val textSearchViewModel: TextSearchViewModel,
     private val navController: NavController
 ) {
     fun navigateThroughDrawer(
@@ -32,7 +32,7 @@ class NavigationExtension(
     }
 
     fun navigateToRecipeDetailScreen(recipe: Recipe) {
-        mainViewModel.currentRecipe = recipe
+        textSearchViewModel.currentRecipe = recipe
         navController.navigate(Routes.DetailScreenRoute.route)
     }
 }

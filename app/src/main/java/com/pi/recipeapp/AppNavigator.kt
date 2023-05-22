@@ -16,8 +16,10 @@ import androidx.navigation.navigation
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.pi.recipeapp.auth.GoogleAuth
-import com.pi.recipeapp.auth.InAppAuth
+import com.pi.recipeapp.firebase.auth.GoogleAuth
+import com.pi.recipeapp.firebase.auth.InAppAuth
+import com.pi.recipeapp.firebase.utils.FirebaseUtil
+import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.ui.navigation.NavigationExtension
 
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalDrawerContent
@@ -25,12 +27,15 @@ import com.pi.recipeapp.ui.scaffold_components.RecipeTopAppBar
 import com.pi.recipeapp.ui.screens.DetailScreen
 import com.pi.recipeapp.ui.screens.build.BuildRecipeScreen
 import com.pi.recipeapp.ui.screens.build.BuildRecipeViewModel
+import com.pi.recipeapp.ui.screens.detail.RecipeDetailViewModel
+import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchViewModel
 import com.pi.recipeapp.ui.screens.imagesearch.RecipeImageSearchScreen
 import com.pi.recipeapp.ui.screens.login.LoginScreen
 import com.pi.recipeapp.ui.screens.login.RegistrationScreen
 import com.pi.recipeapp.ui.screens.main.MainScreen
-import com.pi.recipeapp.ui.screens.main.MainViewModel
+import com.pi.recipeapp.ui.screens.main.TextSearchViewModel
 import com.pi.recipeapp.ui.screens.saved.SavedRecipesScreen
+import com.pi.recipeapp.ui.screens.saved.SavedRecipesViewModel
 import com.pi.recipeapp.utils.Routes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -44,26 +49,30 @@ fun AppNavigator() {
     val googleAuth = get<GoogleAuth>()
     val inAppAuth = get<InAppAuth>()
     val navController = rememberNavController()
-    val mainViewModel = getViewModel<MainViewModel>()
+    val textSearchViewModel = getViewModel<TextSearchViewModel>()
+    val recipeDetailViewModel = getViewModel<RecipeDetailViewModel>()
+    val imageSearchViewModel = getViewModel<ImageSearchViewModel>()
     val buildRecipeViewModel = getViewModel<BuildRecipeViewModel>()
+    val savedRecipesViewModel = getViewModel<SavedRecipesViewModel>()
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
+    val firebaseUtil = get<FirebaseUtil>()
     val navigationExtension =
-        NavigationExtension(coroutineScope, scaffoldState, mainViewModel, navController)
+        NavigationExtension(coroutineScope, scaffoldState, textSearchViewModel, navController)
     val googleSignIn = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
         onResult = { result ->
             googleAuth.googleAuthorize(
                 result,
                 onSuccess = { user ->
-                    onAuthorizationSuccess(mainViewModel, user, navigationExtension)
+                    onAuthorizationSuccess(savedRecipesViewModel, user, navigationExtension)
                 }, onFailure = { exc ->
                     showSnackbarMessage(coroutineScope, scaffoldState, "Authorization failed ${exc?.message}")
                 })
         })
 
     val startDestination =
-        if (mainViewModel.currentUser == null) Routes.LoginScreenRoute.route else Routes.RecipeDrawerGraphRoute.route
+        if (textSearchViewModel.currentUser == null) Routes.LoginScreenRoute.route else Routes.RecipeDrawerGraphRoute.route
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Routes.LoginScreenRoute.route) {
             Scaffold(scaffoldState = scaffoldState) {
@@ -73,7 +82,7 @@ fun AppNavigator() {
                     googleSignIn.launch(googleAuth.googleSignInClient.signInIntent)
                 }, signInInApp = { email, password ->
                     inAppAuth.signIn(email, password, onSuccess = { user ->
-                        onAuthorizationSuccess(mainViewModel, user, navigationExtension)
+                        onAuthorizationSuccess(savedRecipesViewModel , user, navigationExtension)
                     }, onFailure = { exc ->
                         showSnackbarMessage(coroutineScope, scaffoldState, "Authorization failed ${exc?.message}")
                     })
@@ -84,7 +93,7 @@ fun AppNavigator() {
             Scaffold(scaffoldState = scaffoldState) {
                 RegistrationScreen(register = { email, password, imageUri ->
                     inAppAuth.signUp(email, password, imageUri, onSuccess = { user ->
-                        mainViewModel.currentUser = user
+//                        textSearchViewModel.currentUser = user
                         navigationExtension.navigateWithPopUp(
                             Routes.MainScreenRoute.route,
                             popUpRoute = Routes.LoginScreenRoute.route
@@ -103,9 +112,9 @@ fun AppNavigator() {
                     scaffoldState = scaffoldState
                 ) {
                     MainScreen(
-                        provideSearchInput = mainViewModel.mainViewModelStates::recipeSearchInput,
-                        provideRecipesState = mainViewModel::recipesTextSearchState,
-                        onSearchInputChange = mainViewModel::onRecipeSearchInputChange,
+                        provideSearchInput = textSearchViewModel::recipeSearchInput,
+                        provideRecipesState = textSearchViewModel::recipesTextSearchState,
+                        onSearchInputChange = textSearchViewModel::onRecipeSearchInputChange,
                         navigateToDetailScreen = navigationExtension::navigateToRecipeDetailScreen,
                         showSnackbar = { message ->
                             showSnackbarMessage(coroutineScope, scaffoldState, message)
@@ -119,12 +128,12 @@ fun AppNavigator() {
                     scaffoldState = scaffoldState
                 ) {
                     RecipeImageSearchScreen(
-                        provideRecipesImageSearchState = mainViewModel::recipesImageSearchState,
-                        imageSearchStates = mainViewModel.imageSearchStates,
-                        changeImageBitmap = { mainViewModel.changeImageSearchBitmap(it) },
-                        changeRecipeName = { mainViewModel.changeImageSearchRecipeName(it) },
+                        provideRecipesImageSearchState = imageSearchViewModel::recipesImageSearchState,
+                        imageSearchStates = imageSearchViewModel.imageSearchStates,
+                        changeImageBitmap = { imageSearchViewModel.changeImageSearchBitmap(it) },
+                        changeRecipeName = { imageSearchViewModel.changeImageSearchRecipeName(it) },
                         navigateToDetailScreen = navigationExtension::navigateToRecipeDetailScreen,
-                        loadRecipes = mainViewModel::fetchImageRecipesSearch
+                        loadRecipes = imageSearchViewModel::fetchImageRecipesSearch
                     )
                 }
             }
@@ -151,10 +160,9 @@ fun AppNavigator() {
                         onIngredientsAndMeasuresRemove = buildRecipeViewModel::removeIngredientAndMeasure,
                         onTextInstructionChange = buildRecipeViewModel::changeTextInstruction,
                         onVideoInstructionChange = buildRecipeViewModel::changeVideoInstruction,
-                        onConfirmClick = {
+                        saveRecipe = {
                             buildRecipeViewModel.resetBuildRecipeState()
-                            mainViewModel.addUserRecipeToFavourites(it)
-                            showSnackbarMessage(coroutineScope, scaffoldState, "Recipe was successfully added!")
+                            buildRecipeViewModel.saveRecipeToDb(it)
                         }
                     )
                 }
@@ -164,28 +172,28 @@ fun AppNavigator() {
                     navigationExtension = navigationExtension,
                     coroutineScope = coroutineScope,
                     scaffoldState = scaffoldState,
-                    isDeleteIconVisible = mainViewModel.savedRecipesStates.isDeleteEnabled,
-                    onItemDeleteClick = mainViewModel::removeUserRecipesFromFavorites
+                    isDeleteIconVisible = savedRecipesViewModel.savedRecipesStates.isDeleteEnabled,
+                    onItemDeleteClick = savedRecipesViewModel::removeUserRecipesFromFavorites
                 ) {
                     SavedRecipesScreen(
-                        provideSavedRecipes = mainViewModel::savedRecipes,
+                        provideSavedRecipes = savedRecipesViewModel::savedRecipes,
                         onRecipeItemClick = navigationExtension::navigateToRecipeDetailScreen,
                         onRecipeItemLongClick = { recipe, isSelected ->
                             if (isSelected) {
-                                mainViewModel.selectRecipe(recipe)
+                                savedRecipesViewModel.selectRecipe(recipe)
                             } else {
-                                mainViewModel.removeSelectedRecipe(recipe)
+                                savedRecipesViewModel.removeSelectedRecipe(recipe)
                             }
-                        }, clearSavedRecipesStates = mainViewModel::clearSavedRecipesState)
+                        }, clearSavedRecipesStates = savedRecipesViewModel::clearSavedRecipesState)
                 }
             }
 
             composable(Routes.DetailScreenRoute.route) {
                 DetailScreen(
-                    mainViewModel.currentRecipe,
-                    onExpandClick = mainViewModel::changeExpandItem,
-                    provideExpandedValue = mainViewModel.mainViewModelStates::isExpanded,
-                    onFavouritesClick = mainViewModel::addUserRecipeToFavourites
+                    textSearchViewModel.currentRecipe,
+                    onExpandClick = recipeDetailViewModel::changeExpandItem,
+                    provideExpandedValue = recipeDetailViewModel::isExpanded,
+                    onFavouritesClick = recipeDetailViewModel::addUserRecipeToFavourites
                 )
 
             }
@@ -205,11 +213,12 @@ private fun showSnackbarMessage(
 }
 
 private fun onAuthorizationSuccess(
-    mainViewModel: MainViewModel,
+    savedRecipesViewModel: SavedRecipesViewModel,
     user: FirebaseUser?,
     navigationExtension: NavigationExtension
 ) {
-    mainViewModel.currentUser = user
+//    firebaseUtil.currentUser = user
+    savedRecipesViewModel.currentUser = user
     navigationExtension.navigateWithPopUp(
         Routes.MainScreenRoute.route,
         popUpRoute = Routes.LoginScreenRoute.route
@@ -227,7 +236,7 @@ private fun CreateScaffold(
     onItemDeleteClick: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
-    val user = getViewModel<MainViewModel>().currentUser
+    val user = getViewModel<SavedRecipesViewModel>().currentUser
 
     Scaffold(scaffoldState = scaffoldState, topBar = {
         RecipeTopAppBar(

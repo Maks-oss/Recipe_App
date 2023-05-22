@@ -1,9 +1,8 @@
-package com.pi.recipeapp.utils
+package com.pi.recipeapp.firebase.utils
 
 import android.net.Uri
 import android.util.Log
 import com.google.firebase.storage.StorageReference
-import com.pi.recipeapp.auth.InAppAuth
 
 class CloudStorageUtil(private val storageReference: StorageReference) {
     companion object {

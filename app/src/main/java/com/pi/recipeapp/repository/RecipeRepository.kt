@@ -1,14 +1,14 @@
 package com.pi.recipeapp.repository
 
+import com.google.firebase.auth.FirebaseUser
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.utils.Response
 
 interface RecipeRepository {
+    fun getCurrentUser(): FirebaseUser?
     suspend fun fetchMeals(query: String): Response<List<Recipe>>
-    suspend fun fetchRecipeByName(name: String): Response<Recipe>
-    suspend fun fetchCategoriesFromLocalDb(): List<String>
-    suspend fun fetchIngredientsFromLocalDb(): List<String>
-    fun addRecipeToUserFavorites(userId: String, recipe: Recipe)
-    fun removeRecipesFromUserFavorites(userId: String, recipes: List<Recipe>)
-    fun addUserSavedRecipesListener(userId: String, onRecipeDataChangeCallback: (List<Recipe?>?) -> Unit)
+    fun addRecipeToUserFavorites( recipe: Recipe)
+    fun removeRecipesFromUserFavorites(recipes: List<Recipe>)
+    fun addUserSavedRecipesListener(userId: String,onRecipeDataChangeCallback: (List<Recipe?>?) -> Unit)
+
 }

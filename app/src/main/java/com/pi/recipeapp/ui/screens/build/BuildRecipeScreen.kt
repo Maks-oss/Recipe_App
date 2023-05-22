@@ -66,7 +66,7 @@ fun BuildRecipeScreen(
     onTextInstructionChange: (String) -> Unit,
     onVideoInstructionChange: (String) -> Unit,
     // TODO when database will be present
-    onConfirmClick: (Recipe) -> Unit = {}
+    saveRecipe: (Recipe) -> Unit = {}
 ) {
     val modalSheetState = rememberModalBottomSheetState(
         initialValue = ModalBottomSheetValue.Hidden,
@@ -82,7 +82,7 @@ fun BuildRecipeScreen(
                 coroutineScope.launch {
                     modalSheetState.hide()
                 }
-                onConfirmClick(it)
+                saveRecipe(it.copy(category = "Own"))
             }
         )
     }, modalSheetState = modalSheetState) {
@@ -115,10 +115,11 @@ fun BuildRecipeScreen(
                     onVideoInstructionChange
                 )
                 RecipeBuilderTabsConstants.GENERATED_RECIPE -> RecipeGeneration(
-                    generatedRecipeInput,
-                    onGeneratedRecipeInputChange,
-                    generateRecipe,
-                    generatedRecipeState
+                    generatedRecipeInput = generatedRecipeInput,
+                    onGeneratedRecipeInputChange = onGeneratedRecipeInputChange,
+                    generateRecipe = generateRecipe,
+                    generatedRecipeState = generatedRecipeState,
+                    saveRecipe = saveRecipe
                 )
             }
 
@@ -130,9 +131,10 @@ fun BuildRecipeScreen(
 @Composable
 private fun ColumnScope.RecipeGeneration(
     generatedRecipeInput: String,
+    generatedRecipeState: UiState<Recipe?>,
     onGeneratedRecipeInputChange: (String) -> Unit,
     generateRecipe: () -> Unit,
-    generatedRecipeState: UiState<Recipe?>
+    saveRecipe: (Recipe) -> Unit
 ) {
 
     OutlinedTextField(
@@ -172,8 +174,9 @@ private fun ColumnScope.RecipeGeneration(
                         .fillMaxWidth(),
                     contentScale = ContentScale.Crop
                 )
-                TextButton(onClick = { //TODO
-                     }) {
+                TextButton(onClick = {
+                    saveRecipe(generatedRecipe.copy(category = "AI generated"))
+                }) {
                     Row {
                         Icon(imageVector = Icons.Outlined.Favorite, contentDescription = "")
                         Spacer(modifier = Modifier.padding(8.dp))

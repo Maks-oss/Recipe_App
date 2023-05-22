@@ -1,4 +1,4 @@
-package com.pi.recipeapp.auth
+package com.pi.recipeapp.firebase.auth
 
 import android.app.Activity.RESULT_OK
 import android.content.Context
