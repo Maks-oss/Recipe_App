@@ -37,7 +37,7 @@ class SavedRecipesViewModel(private val recipesRepository: RecipeRepository) : V
     fun removeUserRecipesFromFavorites() {
         if (currentUser != null) {
             recipesRepository.removeRecipesFromUserFavorites(
-                savedRecipesStates.selectedRecipes
+                savedRecipesStates.selectedRecipes.filter { it.value }.keys.toList()
             )
             clearSavedRecipesState()
         }
@@ -45,17 +45,18 @@ class SavedRecipesViewModel(private val recipesRepository: RecipeRepository) : V
 
     fun selectRecipe(recipe: Recipe) {
         if (savedRecipes != null) {
-            val selectedRecipes = savedRecipesStates.selectedRecipes.toMutableList().apply {
-                add(recipe)
+            val selectedRecipes = savedRecipesStates.selectedRecipes.toMutableMap().apply {
+                this[recipe] = true
             }
             savedRecipesStates = savedRecipesStates.copy(isDeleteEnabled = true, selectedRecipes)
+
         }
     }
 
     fun removeSelectedRecipe(recipe: Recipe) {
         if (savedRecipes != null) {
-            val removedSelectedRecipes = savedRecipesStates.selectedRecipes.toMutableList().apply {
-                remove(recipe)
+            val removedSelectedRecipes = savedRecipesStates.selectedRecipes.toMutableMap().apply {
+                this[recipe] = false
             }
             savedRecipesStates = savedRecipesStates.copy(
                 isDeleteEnabled = removedSelectedRecipes.isNotEmpty(),
@@ -65,6 +66,6 @@ class SavedRecipesViewModel(private val recipesRepository: RecipeRepository) : V
     }
 
     fun clearSavedRecipesState() {
-        savedRecipesStates = savedRecipesStates.copy(false, emptyList())
+        savedRecipesStates = savedRecipesStates.copy(false, emptyMap())
     }
 }

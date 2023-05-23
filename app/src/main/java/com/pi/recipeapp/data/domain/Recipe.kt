@@ -9,6 +9,7 @@ data class Recipe(
     val area: String = "",
     val category: String = "",
     val ingredients: Map<String,String> = emptyMap(),
+    var isSelected: Boolean = false
 ) {
     fun toMap(): Map<String, Any> {
         return mapOf(

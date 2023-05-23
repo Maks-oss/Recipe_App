@@ -67,7 +67,11 @@ fun AppNavigator() {
                 onSuccess = { user ->
                     onAuthorizationSuccess(savedRecipesViewModel, user, navigationExtension)
                 }, onFailure = { exc ->
-                    showSnackbarMessage(coroutineScope, scaffoldState, "Authorization failed ${exc?.message}")
+                    showSnackbarMessage(
+                        coroutineScope,
+                        scaffoldState,
+                        "Authorization failed ${exc?.message}"
+                    )
                 })
         })
 
@@ -82,9 +86,13 @@ fun AppNavigator() {
                     googleSignIn.launch(googleAuth.googleSignInClient.signInIntent)
                 }, signInInApp = { email, password ->
                     inAppAuth.signIn(email, password, onSuccess = { user ->
-                        onAuthorizationSuccess(savedRecipesViewModel , user, navigationExtension)
+                        onAuthorizationSuccess(savedRecipesViewModel, user, navigationExtension)
                     }, onFailure = { exc ->
-                        showSnackbarMessage(coroutineScope, scaffoldState, "Authorization failed ${exc?.message}")
+                        showSnackbarMessage(
+                            coroutineScope,
+                            scaffoldState,
+                            "Authorization failed ${exc?.message}"
+                        )
                     })
                 })
             }
@@ -99,7 +107,11 @@ fun AppNavigator() {
                             popUpRoute = Routes.LoginScreenRoute.route
                         )
                     }, onFailure = { exc ->
-                        showSnackbarMessage(coroutineScope, scaffoldState, "Authorization failed ${exc?.message}")
+                        showSnackbarMessage(
+                            coroutineScope,
+                            scaffoldState,
+                            "Authorization failed ${exc?.message}"
+                        )
                     })
                 })
             }
@@ -184,7 +196,10 @@ fun AppNavigator() {
                             } else {
                                 savedRecipesViewModel.removeSelectedRecipe(recipe)
                             }
-                        }, clearSavedRecipesStates = savedRecipesViewModel::clearSavedRecipesState)
+                        },
+                        clearSavedRecipesStates = savedRecipesViewModel::clearSavedRecipesState,
+                        provideSavedRecipesState = savedRecipesViewModel::savedRecipesStates
+                    )
                 }
             }
 

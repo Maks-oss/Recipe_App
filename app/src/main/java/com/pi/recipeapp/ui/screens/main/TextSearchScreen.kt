@@ -95,14 +95,17 @@ fun RecipeGridList(
     modifier: Modifier = Modifier,
     recipes: List<Recipe>,
     onRecipeItemClick: (Recipe) -> Unit,
+    selectedRecipes: Map<Recipe, Boolean> = emptyMap(),
     onRecipeItemLongClick: ((Recipe, isSelected: Boolean) -> Unit)? = null
 ) {
     LazyVerticalGrid(modifier = modifier, columns = GridCells.Fixed(2)) {
         items(recipes) {
+            val isSelected = selectedRecipes[it] ?: false
             RecipeListItem(
                 it,
                 onRecipeItemClick = onRecipeItemClick,
                 onRecipeItemLongClick = onRecipeItemLongClick,
+                isSelected = isSelected
             )
         }
     }
@@ -113,11 +116,10 @@ fun RecipeGridList(
 fun RecipeListItem(
     recipe: Recipe,
     onRecipeItemClick: (Recipe) -> Unit,
+    isSelected: Boolean = false,
     onRecipeItemLongClick: ((Recipe, isSelected: Boolean) -> Unit)? = null
 ) {
-    var isSelected by remember {
-        mutableStateOf(false)
-    }
+//    val isSelected = recipe.isSelected
     val selectedColor = if (isSystemInDarkTheme()) Color.DarkGray else Color.LightGray
     Card(
         backgroundColor = if (isSelected) selectedColor else MaterialTheme.colors.surface,
@@ -127,10 +129,10 @@ fun RecipeListItem(
             .combinedClickable(
                 onClick = { onRecipeItemClick(recipe) },
                 onLongClick = {
-                    isSelected = !isSelected
+//                    isSelected = !isSelected
                     onRecipeItemLongClick?.invoke(
                         recipe,
-                        isSelected
+                        !isSelected
                     )
                 }),
         shape = ComplexRoundedShape
@@ -155,8 +157,6 @@ fun RecipeListItem(
                 style = MaterialTheme.typography.body1
             )
         }
-
-
     }
 }
 

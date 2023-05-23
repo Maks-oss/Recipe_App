@@ -27,17 +27,20 @@ import com.pi.recipeapp.ui.screens.main.RecipeGridList
 @Composable
 fun SavedRecipesScreen(
     provideSavedRecipes: () -> List<Recipe?>?,
+    provideSavedRecipesState: () -> SavedRecipesStates,
     clearSavedRecipesStates: () -> Unit,
     onRecipeItemClick: (Recipe) -> Unit,
     onRecipeItemLongClick: (Recipe, isSelected: Boolean) -> Unit
 ) {
     val savedRecipes = provideSavedRecipes()
+    val savedRecipesStates = provideSavedRecipesState()
     CleanUpSavedRecipeStates(clearSavedRecipesStates)
     if (savedRecipes != null) {
         SavedRecipeList(
             recipes = savedRecipes,
             onRecipeItemClick = onRecipeItemClick,
             onRecipeItemLongClick = onRecipeItemLongClick,
+            selectedRecipes = savedRecipesStates.selectedRecipes
         )
     }
 }
@@ -61,11 +64,11 @@ private fun CleanUpSavedRecipeStates(clearSavedRecipesStates: () -> Unit) {
 @Composable
 fun SavedRecipeList(
     recipes: List<Recipe?>,
+    selectedRecipes: Map<Recipe, Boolean>,
     onRecipeItemClick: (Recipe) -> Unit,
     onRecipeItemLongClick: (Recipe, isSelected: Boolean) -> Unit
 ) {
     val recipeByCategories = recipes.filterNotNull().groupBy { it.category }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -87,6 +90,7 @@ fun SavedRecipeList(
                     recipes = recipesList,
                     onRecipeItemClick = onRecipeItemClick,
                     onRecipeItemLongClick = onRecipeItemLongClick,
+                    selectedRecipes = selectedRecipes
                 )
             }
         }
