@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseUser
 import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.mapper.GeneratedRecipesMapper
 import com.pi.recipeapp.repository.RecipeGeneratorRepository
@@ -27,28 +28,35 @@ class BuildRecipeViewModel(
         private set
     var generatedRecipeState by mutableStateOf(UiState<Recipe?>())
         private set
-
+    private val currentUser: FirebaseUser?
+        get() = recipeRepository.getCurrentUser()
     fun saveRecipeToDb(recipe: Recipe) {
         Log.d("TAG", "saveRecipeToDb: $recipe")
-        recipeRepository.addRecipeToUserFavorites(recipe)
+        recipeRepository.addRecipeToUserFavorites(currentUser!!.uid, recipe)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun generateRecipe() {
-        generatedRecipeState = generatedRecipeState.copy(data = null, isLoading = true)
+        generatedRecipeState = generatedRecipeState.copy(data = null, isLoading = true, errorMessage = null)
         viewModelScope.launch {
             val preProcessed = generateRecipeText.replace(" ", ",")
-            val recipe =
-                recipeGeneratorRepository.generateRecipe(preProcessed)
-            val recipeImage = recipeGeneratorRepository.generateImage(
-                preProcessed + GeneratedRecipesMapper.getRecipeName(recipe)
-            )
-            generatedRecipeState = generatedRecipeState.copy(
-                GeneratedRecipesMapper.convertGeneratedRecipeToRecipe(
-                    preProcessed + recipe,
-                    recipeImage
-                ), isLoading = false
-            )
+            try {
+                val recipe =
+                    recipeGeneratorRepository.generateRecipe(preProcessed)
+                val recipeImage = recipeGeneratorRepository.generateImage(
+                    preProcessed + GeneratedRecipesMapper.getRecipeName(recipe)
+                )
+                generatedRecipeState = generatedRecipeState.copy(
+                    GeneratedRecipesMapper.convertGeneratedRecipeToRecipe(
+                        preProcessed + recipe,
+                        recipeImage
+                    ), isLoading = false, errorMessage = null
+                )
+            } catch (e: Exception) {
+                generatedRecipeState = generatedRecipeState.copy(
+                    null, isLoading = false, e.message
+                )
+            }
         }
     }
 

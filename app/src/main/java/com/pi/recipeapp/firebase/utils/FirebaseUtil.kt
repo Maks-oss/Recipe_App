@@ -2,6 +2,7 @@ package com.pi.recipeapp.firebase.utils
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -15,6 +16,7 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.getValue
 import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.data.domain.Recipe
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.properties.Delegates
 
 class FirebaseUtil(
@@ -24,12 +26,26 @@ class FirebaseUtil(
     companion object {
         private const val TAG = "FirebaseUtil"
     }
-    var currentUser: FirebaseUser? = Firebase.auth.currentUser
+    var savedRecipes: List<Recipe?>? = null
+    var currentUser by Delegates.observable(Firebase.auth.currentUser) { _, _, newValue ->
+        if (newValue != null) {
+            addSavedRecipesListener(newValue.uid) {
+                savedRecipes = it
+            }
+        }
+    }
+    init {
+        if (currentUser != null) {
+            addSavedRecipesListener(currentUser!!.uid) {
+                savedRecipes = it
+            }
+        }
+    }
 
-
-    fun addRecipeToDatabase(recipe: Recipe) {
-        val userId = currentUser?.uid
+    fun addRecipeToDatabase(userId: String,recipe: Recipe) {
+//        val userId = currentUser?.uid
         val recipeKey = databaseReference.child("users/${userId}").push()
+        Log.d(TAG, "addRecipeToDatabase: ")
         if (recipe.category.startsWith("Own")) {
             cloudStorageUtil.uploadImageToCloud(
                 "recipeImages/${recipeKey.key}.jpg", Uri.parse(recipe.imageUrl), onSuccess = {
@@ -41,12 +57,13 @@ class FirebaseUtil(
                     )
                 })
         } else {
+            Log.d(TAG, "addRecipeToDatabaseSuccess: ")
             recipeKey.setValue(recipe)
         }
     }
 
-    fun removeRecipesFromDatabase(recipes: List<Recipe>) {
-        val userId = currentUser?.uid
+    fun removeRecipesFromDatabase(userId: String, recipes: List<Recipe>) {
+//        val userId = currentUser?.uid
         val ref = databaseReference.child("users/${userId}")
         val query = ref.orderByChild("id")
 

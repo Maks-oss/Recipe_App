@@ -1,6 +1,7 @@
 package com.pi.recipeapp.ui.screens.saved
 
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,26 +18,16 @@ import kotlin.properties.Delegates
 class SavedRecipesViewModel(private val recipesRepository: RecipeRepository) : ViewModel() {
     var savedRecipesStates: SavedRecipesStates by mutableStateOf(SavedRecipesStates())
         private set
-    var savedRecipes: List<Recipe?>? by mutableStateOf(null)
-        private set
-    var currentUser by Delegates.observable(Firebase.auth.currentUser) { _, _, newValue ->
-        if (newValue != null) {
-            recipesRepository.addUserSavedRecipesListener(newValue.uid) { savedRecipes = it }
-        }
+    val savedRecipes: MutableState<List<Recipe?>?>
+        get() {
+        return mutableStateOf(recipesRepository.getSavedRecipes())
     }
-    init {
-        viewModelScope.launch {
-            if (currentUser != null) {
-                recipesRepository.addUserSavedRecipesListener(currentUser!!.uid) { savedRecipes = it }
-            }
-        }
-    }
-
-
+    val currentUser = recipesRepository.getCurrentUser()
 
     fun removeUserRecipesFromFavorites() {
         if (currentUser != null) {
             recipesRepository.removeRecipesFromUserFavorites(
+                currentUser.uid,
                 savedRecipesStates.selectedRecipes.filter { it.value }.keys.toList()
             )
             clearSavedRecipesState()
@@ -44,25 +35,20 @@ class SavedRecipesViewModel(private val recipesRepository: RecipeRepository) : V
     }
 
     fun selectRecipe(recipe: Recipe) {
-        if (savedRecipes != null) {
-            val selectedRecipes = savedRecipesStates.selectedRecipes.toMutableMap().apply {
-                this[recipe] = true
-            }
-            savedRecipesStates = savedRecipesStates.copy(isDeleteEnabled = true, selectedRecipes)
-
+        val selectedRecipes = savedRecipesStates.selectedRecipes.toMutableMap().apply {
+            this[recipe] = true
         }
+        savedRecipesStates = savedRecipesStates.copy(isDeleteEnabled = true, selectedRecipes)
     }
 
     fun removeSelectedRecipe(recipe: Recipe) {
-        if (savedRecipes != null) {
-            val removedSelectedRecipes = savedRecipesStates.selectedRecipes.toMutableMap().apply {
-                this[recipe] = false
-            }
-            savedRecipesStates = savedRecipesStates.copy(
-                isDeleteEnabled = removedSelectedRecipes.isNotEmpty(),
-                selectedRecipes = removedSelectedRecipes
-            )
+        val removedSelectedRecipes = savedRecipesStates.selectedRecipes.toMutableMap().apply {
+            this[recipe] = false
         }
+        savedRecipesStates = savedRecipesStates.copy(
+            isDeleteEnabled = removedSelectedRecipes.isNotEmpty(),
+            selectedRecipes = removedSelectedRecipes
+        )
     }
 
     fun clearSavedRecipesState() {

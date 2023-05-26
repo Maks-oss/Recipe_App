@@ -3,6 +3,7 @@ package com.pi.recipeapp.ui.screens.build
 import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.MediaStore
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
@@ -155,8 +156,12 @@ private fun ColumnScope.RecipeGeneration(
     }
     val generatedRecipe = generatedRecipeState.data
     val isLoading = generatedRecipeState.isLoading
+    val errorMessage = generatedRecipeState.errorMessage
     if (isLoading) {
         LoadingShimmerEffect(500.dp)
+    }
+    if (errorMessage != null && !isLoading) {
+        Toast.makeText(LocalContext.current, errorMessage, Toast.LENGTH_SHORT).show()
     }
     if (generatedRecipe != null && !isLoading) {
         CustomSurface {

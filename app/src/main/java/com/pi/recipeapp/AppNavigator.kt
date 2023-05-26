@@ -40,6 +40,8 @@ import com.pi.recipeapp.utils.Routes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.get
+import org.koin.android.ext.android.get
+
 import org.koin.androidx.compose.getViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -65,7 +67,7 @@ fun AppNavigator() {
             googleAuth.googleAuthorize(
                 result,
                 onSuccess = { user ->
-                    onAuthorizationSuccess(savedRecipesViewModel, user, navigationExtension)
+                    onAuthorizationSuccess(firebaseUtil, user, navigationExtension)
                 }, onFailure = { exc ->
                     showSnackbarMessage(
                         coroutineScope,
@@ -76,7 +78,7 @@ fun AppNavigator() {
         })
 
     val startDestination =
-        if (textSearchViewModel.currentUser == null) Routes.LoginScreenRoute.route else Routes.RecipeDrawerGraphRoute.route
+        if (firebaseUtil.currentUser == null) Routes.LoginScreenRoute.route else Routes.RecipeDrawerGraphRoute.route
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Routes.LoginScreenRoute.route) {
             Scaffold(scaffoldState = scaffoldState) {
@@ -86,7 +88,7 @@ fun AppNavigator() {
                     googleSignIn.launch(googleAuth.googleSignInClient.signInIntent)
                 }, signInInApp = { email, password ->
                     inAppAuth.signIn(email, password, onSuccess = { user ->
-                        onAuthorizationSuccess(savedRecipesViewModel, user, navigationExtension)
+                        onAuthorizationSuccess(firebaseUtil, user, navigationExtension)
                     }, onFailure = { exc ->
                         showSnackbarMessage(
                             coroutineScope,
@@ -101,7 +103,7 @@ fun AppNavigator() {
             Scaffold(scaffoldState = scaffoldState) {
                 RegistrationScreen(register = { email, password, imageUri ->
                     inAppAuth.signUp(email, password, imageUri, onSuccess = { user ->
-//                        textSearchViewModel.currentUser = user
+                        firebaseUtil.currentUser = user
                         navigationExtension.navigateWithPopUp(
                             Routes.MainScreenRoute.route,
                             popUpRoute = Routes.LoginScreenRoute.route
@@ -143,9 +145,9 @@ fun AppNavigator() {
                         provideRecipesImageSearchState = imageSearchViewModel::recipesImageSearchState,
                         imageSearchStates = imageSearchViewModel.imageSearchStates,
                         changeImageBitmap = { imageSearchViewModel.changeImageSearchBitmap(it) },
-                        changeRecipeName = { imageSearchViewModel.changeImageSearchRecipeName(it) },
+//                        changeRecipeName = { imageSearchViewModel.changeImageSearchRecipeName(it) },
                         navigateToDetailScreen = navigationExtension::navigateToRecipeDetailScreen,
-                        loadRecipes = imageSearchViewModel::fetchImageRecipesSearch
+                        loadRecipesByImage = { imageSearchViewModel.fetchImageRecipesSearch(it) }
                     )
                 }
             }
@@ -188,7 +190,7 @@ fun AppNavigator() {
                     onItemDeleteClick = savedRecipesViewModel::removeUserRecipesFromFavorites
                 ) {
                     SavedRecipesScreen(
-                        provideSavedRecipes = savedRecipesViewModel::savedRecipes,
+                        provideSavedRecipes = { savedRecipesViewModel.savedRecipes.value },
                         onRecipeItemClick = navigationExtension::navigateToRecipeDetailScreen,
                         onRecipeItemLongClick = { recipe, isSelected ->
                             if (isSelected) {
@@ -228,12 +230,18 @@ private fun showSnackbarMessage(
 }
 
 private fun onAuthorizationSuccess(
-    savedRecipesViewModel: SavedRecipesViewModel,
+//    buildRecipeViewModel: BuildRecipeViewModel,
+//    savedRecipesViewModel: SavedRecipesViewModel,
+//    detailViewModel: RecipeDetailViewModel,
+    firebaseUtil: FirebaseUtil,
     user: FirebaseUser?,
     navigationExtension: NavigationExtension
 ) {
-//    firebaseUtil.currentUser = user
-    savedRecipesViewModel.currentUser = user
+    firebaseUtil.currentUser = user
+//    detailViewModel.currentUser = user
+//    savedRecipesViewModel.currentUser = user
+//    buildRecipeViewModel.currentUser = user
+//    savedRecipesViewModel.addSavedRecipesListener(user!!.uid, onRecipeDataChangeCallback = { savedRecipesViewModel.savedRecipes = it})
     navigationExtension.navigateWithPopUp(
         Routes.MainScreenRoute.route,
         popUpRoute = Routes.LoginScreenRoute.route

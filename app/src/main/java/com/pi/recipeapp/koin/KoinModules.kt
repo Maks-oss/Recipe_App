@@ -17,6 +17,7 @@ import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchViewModel
 import com.pi.recipeapp.ui.screens.main.TextSearchViewModel
 import com.pi.recipeapp.firebase.utils.CloudStorageUtil
 import com.pi.recipeapp.firebase.utils.FirebaseUtil
+import com.pi.recipeapp.ml.LiteModelAiyVisionClassifierFoodV11
 import com.pi.recipeapp.ui.screens.detail.RecipeDetailViewModel
 import com.pi.recipeapp.ui.screens.saved.SavedRecipesViewModel
 import com.theokanning.openai.service.OpenAiService
@@ -48,7 +49,7 @@ val authModule = module {
     single { InAppAuth(get()) }
 }
 val repositoryModule = module {
-    single<RecipeRepository> { RecipeRepositoryImpl(get(), get()) }
+    single<RecipeRepository> { RecipeRepositoryImpl(get(), get(), LiteModelAiyVisionClassifierFoodV11.newInstance(androidContext())) }
     single<RecipeGeneratorRepository> { RecipeGeneratorRepository(OpenAiService(BuildConfig.openApiKey)) }
 }
 val firebaseModule = module {
