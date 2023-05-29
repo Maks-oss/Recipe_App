@@ -7,6 +7,6 @@ sealed class Routes(val route: String) {
     object RecipeBuilderScreenRoute : Routes("RecipeBuilderScreen")
     object RecipeImageSearchScreen : Routes("RecipeImageSearchScreen")
     object SavedRecipesScreen: Routes("SavedRecipesScreen")
-    object MainScreenRoute : Routes("MainScreen")
+    object TextSearchScreenRoute : Routes("MainScreen")
     object DetailScreenRoute : Routes("DetailScreen")
 }

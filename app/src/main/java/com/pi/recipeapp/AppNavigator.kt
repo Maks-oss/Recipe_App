@@ -19,7 +19,6 @@ import com.google.firebase.ktx.Firebase
 import com.pi.recipeapp.firebase.auth.GoogleAuth
 import com.pi.recipeapp.firebase.auth.InAppAuth
 import com.pi.recipeapp.firebase.utils.FirebaseUtil
-import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.ui.navigation.NavigationExtension
 
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalDrawerContent
@@ -32,7 +31,7 @@ import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchViewModel
 import com.pi.recipeapp.ui.screens.imagesearch.RecipeImageSearchScreen
 import com.pi.recipeapp.ui.screens.login.LoginScreen
 import com.pi.recipeapp.ui.screens.login.RegistrationScreen
-import com.pi.recipeapp.ui.screens.main.MainScreen
+import com.pi.recipeapp.ui.screens.main.TextSearchScreen
 import com.pi.recipeapp.ui.screens.main.TextSearchViewModel
 import com.pi.recipeapp.ui.screens.saved.SavedRecipesScreen
 import com.pi.recipeapp.ui.screens.saved.SavedRecipesViewModel
@@ -40,7 +39,6 @@ import com.pi.recipeapp.utils.Routes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.get
-import org.koin.android.ext.android.get
 
 import org.koin.androidx.compose.getViewModel
 
@@ -105,7 +103,7 @@ fun AppNavigator() {
                     inAppAuth.signUp(email, password, imageUri, onSuccess = { user ->
                         firebaseUtil.currentUser = user
                         navigationExtension.navigateWithPopUp(
-                            Routes.MainScreenRoute.route,
+                            Routes.TextSearchScreenRoute.route,
                             popUpRoute = Routes.LoginScreenRoute.route
                         )
                     }, onFailure = { exc ->
@@ -118,14 +116,14 @@ fun AppNavigator() {
                 })
             }
         }
-        navigation(Routes.MainScreenRoute.route, Routes.RecipeDrawerGraphRoute.route) {
-            composable(Routes.MainScreenRoute.route) {
+        navigation(Routes.TextSearchScreenRoute.route, Routes.RecipeDrawerGraphRoute.route) {
+            composable(Routes.TextSearchScreenRoute.route) {
                 CreateScaffold(
                     navigationExtension = navigationExtension,
                     coroutineScope = coroutineScope,
                     scaffoldState = scaffoldState
                 ) {
-                    MainScreen(
+                    TextSearchScreen(
                         provideSearchInput = textSearchViewModel::recipeSearchInput,
                         provideRecipesState = textSearchViewModel::recipesTextSearchState,
                         onSearchInputChange = textSearchViewModel::onRecipeSearchInputChange,
@@ -147,7 +145,10 @@ fun AppNavigator() {
                         changeImageBitmap = { imageSearchViewModel.changeImageSearchBitmap(it) },
 //                        changeRecipeName = { imageSearchViewModel.changeImageSearchRecipeName(it) },
                         navigateToDetailScreen = navigationExtension::navigateToRecipeDetailScreen,
-                        loadRecipesByImage = { imageSearchViewModel.fetchImageRecipesSearch(it) }
+                        loadRecipesByImage = { imageSearchViewModel.fetchImageRecipesSearch(it) },
+                        showSearchError = { message ->
+                            showSnackbarMessage(coroutineScope, scaffoldState, message)
+                        }
                     )
                 }
             }
@@ -243,7 +244,7 @@ private fun onAuthorizationSuccess(
 //    buildRecipeViewModel.currentUser = user
 //    savedRecipesViewModel.addSavedRecipesListener(user!!.uid, onRecipeDataChangeCallback = { savedRecipesViewModel.savedRecipes = it})
     navigationExtension.navigateWithPopUp(
-        Routes.MainScreenRoute.route,
+        Routes.TextSearchScreenRoute.route,
         popUpRoute = Routes.LoginScreenRoute.route
     )
 }
@@ -271,7 +272,7 @@ private fun CreateScaffold(
     }, drawerContent = {
         RecipeModalDrawerContent(user = user, navigateToTextSearchScreen = {
             navigationExtension.navigateThroughDrawer(
-                Routes.MainScreenRoute.route
+                Routes.TextSearchScreenRoute.route
             )
         }, navigateToImageSearchScreen = {
             navigationExtension.navigateThroughDrawer(

@@ -46,7 +46,7 @@ class SavedRecipesViewModel(private val recipesRepository: RecipeRepository) : V
             this[recipe] = false
         }
         savedRecipesStates = savedRecipesStates.copy(
-            isDeleteEnabled = removedSelectedRecipes.isNotEmpty(),
+            isDeleteEnabled = removedSelectedRecipes.filter { it.value }.isNotEmpty(),
             selectedRecipes = removedSelectedRecipes
         )
     }

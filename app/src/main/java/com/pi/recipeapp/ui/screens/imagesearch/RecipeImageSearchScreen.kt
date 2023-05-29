@@ -25,7 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
@@ -47,7 +50,8 @@ fun RecipeImageSearchScreen(
     imageSearchStates: ImageSearchStates,
     changeImageBitmap: (Bitmap?) -> Unit,
     navigateToDetailScreen: (Recipe) -> Unit,
-    loadRecipesByImage: (Bitmap?) -> Unit
+    loadRecipesByImage: (Bitmap?) -> Unit,
+    showSearchError: (String) -> Unit
 ) {
     val recipesImageSearchState = provideRecipesImageSearchState()
     val (recipeName, imageBitmap) = imageSearchStates
@@ -86,7 +90,7 @@ fun RecipeImageSearchScreen(
                             .size(Size.ORIGINAL)
                             .build()
                     ) else painterResource(id = R.drawable.image_placeholder),
-                    contentDescription = "",
+                    contentDescription = "Meal image",
                     modifier = Modifier
                         .size(height = 400.dp, width = LocalConfiguration.current.screenWidthDp.dp)
                         .align(Alignment.CenterHorizontally)
@@ -99,7 +103,7 @@ fun RecipeImageSearchScreen(
                 }
                 LaunchedEffect(recipesImageSearchState.errorMessage) {
                     recipesImageSearchState.errorMessage?.let {
-                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                       showSearchError(it)
                     }
                 }
 
@@ -124,19 +128,21 @@ private fun ShowDish(
                 .fillMaxSize()
         )
     } else {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(text = recipeName, style = MaterialTheme.typography.h6)
-            HyperlinkText(
-                modifier = Modifier.align(Alignment.CenterVertically),
-                fullText = "See on website",
-                linkText = listOf("See on website"),
-                hyperlinks = listOf("https://www.allrecipes.com/search?q=$recipeName")
-            )
+        if (recipeName.isNotEmpty()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = recipeName, style = MaterialTheme.typography.h6)
+                HyperlinkText(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    fullText = "See on website",
+                    linkText = listOf("See on website"),
+                    hyperlinks = listOf("https://www.allrecipes.com/search?q=$recipeName")
+                )
+            }
+            ShowRecipeResults(recipesImageSearchState, navigateToDetailScreen)
         }
-        ShowRecipeResults(recipesImageSearchState, navigateToDetailScreen)
     }
 }
 
@@ -148,7 +154,7 @@ private fun ShowRecipeResults(
     FlowRow {
         recipesState.data?.forEach { recipe ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag( "Image Search Result"),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -159,7 +165,8 @@ private fun ShowRecipeResults(
                     border = BorderStroke(
                         1.dp,
                         MaterialTheme.colors.primary
-                    )
+                    ),
+                    modifier = Modifier.testTag("Recipe Button")
                 ) {
                     Text(text = "Show Recipe")
                 }
