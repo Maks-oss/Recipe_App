@@ -20,6 +20,7 @@ import com.pi.recipeapp.firebase.utils.FirebaseUtil
 import com.pi.recipeapp.ml.LiteModelAiyVisionClassifierFoodV11
 import com.pi.recipeapp.utils.Response
 import org.tensorflow.lite.support.image.TensorImage
+import java.net.UnknownHostException
 import kotlin.properties.Delegates
 
 class RecipeRepositoryImpl(
@@ -42,8 +43,11 @@ class RecipeRepositoryImpl(
             }
             val recipeList = RecipesMapper.convertRecipeDtoToDomain(recipes)
             Response.Success(recipeList)
+        } catch (ex: UnknownHostException) {
+            Log.e(TAG, "fetchMeals: ${ex.stackTraceToString()}")
+            Response.Error("Could not send request to server. Please check your internet connection")
         } catch (exc: Exception) {
-            Log.e(TAG, "fetchMeals: ${exc.message}")
+            Log.e(TAG, "fetchMeals: ${exc.stackTraceToString()}")
             Response.Error(exc.message)
         }
 
@@ -54,6 +58,9 @@ class RecipeRepositoryImpl(
             val mealName = getTFSearchResult(imageBitmap)
             Log.d(TAG, "fetchMealsByPhoto: $mealName")
             mealName to fetchMealsByText(mealName)
+        } catch (ex: UnknownHostException) {
+            Log.e(TAG, "fetchMeals: ${ex.stackTraceToString()}")
+            "" to Response.Error("Could not send request to server. Please check your internet connection")
         } catch (e: Exception) {
             Log.d(TAG, "fetchMealsByPhotoerror: ${e.message}")
             "" to Response.Error(e.message)

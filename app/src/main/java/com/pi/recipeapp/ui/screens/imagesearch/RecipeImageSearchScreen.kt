@@ -89,7 +89,7 @@ fun RecipeImageSearchScreen(
                             .crossfade(true)
                             .size(Size.ORIGINAL)
                             .build()
-                    ) else painterResource(id = R.drawable.image_placeholder),
+                    ) else painterResource(id = R.drawable.select_image),
                     contentDescription = "Meal image",
                     modifier = Modifier
                         .size(height = 400.dp, width = LocalConfiguration.current.screenWidthDp.dp)

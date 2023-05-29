@@ -17,12 +17,11 @@ object GeneratedRecipesMapper {
             .map {
                 it.replace("[","").replace("]","").replace("'", "")
             }
-        Log.d("TAG", "instruction: $instruction")
+//        Log.d("TAG", "instruction: $instruction")
         return Recipe(
             id = Base64.getEncoder().encodeToString(generatedRecipe.toByteArray()),
             name = generatedRecipe.getByRegularExpression("^(.*)\\nDescription:")?.get(1) ?: "",
             instruction = instruction.joinToString(separator = " "),
-            // TODO image generator
             imageUrl = recipeImage
         )
     }

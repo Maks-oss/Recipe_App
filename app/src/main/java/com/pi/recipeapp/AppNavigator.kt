@@ -143,7 +143,6 @@ fun AppNavigator() {
                         provideRecipesImageSearchState = imageSearchViewModel::recipesImageSearchState,
                         imageSearchStates = imageSearchViewModel.imageSearchStates,
                         changeImageBitmap = { imageSearchViewModel.changeImageSearchBitmap(it) },
-//                        changeRecipeName = { imageSearchViewModel.changeImageSearchRecipeName(it) },
                         navigateToDetailScreen = navigationExtension::navigateToRecipeDetailScreen,
                         loadRecipesByImage = { imageSearchViewModel.fetchImageRecipesSearch(it) },
                         showSearchError = { message ->
@@ -225,24 +224,16 @@ private fun showSnackbarMessage(
     message: String
 ) {
     coroutineScope.launch {
-//        scaffoldState.snackbarHostState.showSnackbar(" Authorization failed ${exc?.message}")
         scaffoldState.snackbarHostState.showSnackbar(message)
     }
 }
 
 private fun onAuthorizationSuccess(
-//    buildRecipeViewModel: BuildRecipeViewModel,
-//    savedRecipesViewModel: SavedRecipesViewModel,
-//    detailViewModel: RecipeDetailViewModel,
     firebaseUtil: FirebaseUtil,
     user: FirebaseUser?,
     navigationExtension: NavigationExtension
 ) {
     firebaseUtil.currentUser = user
-//    detailViewModel.currentUser = user
-//    savedRecipesViewModel.currentUser = user
-//    buildRecipeViewModel.currentUser = user
-//    savedRecipesViewModel.addSavedRecipesListener(user!!.uid, onRecipeDataChangeCallback = { savedRecipesViewModel.savedRecipes = it})
     navigationExtension.navigateWithPopUp(
         Routes.TextSearchScreenRoute.route,
         popUpRoute = Routes.LoginScreenRoute.route

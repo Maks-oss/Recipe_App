@@ -14,8 +14,11 @@ import com.pi.recipeapp.data.domain.Recipe
 import com.pi.recipeapp.mapper.GeneratedRecipesMapper
 import com.pi.recipeapp.repository.RecipeGeneratorRepository
 import com.pi.recipeapp.repository.RecipeRepository
+import com.pi.recipeapp.repository.RecipeRepositoryImpl
 import com.pi.recipeapp.ui.utils.UiState
+import com.pi.recipeapp.utils.Response
 import kotlinx.coroutines.launch
+import java.net.UnknownHostException
 
 class BuildRecipeViewModel(
     private val recipeGeneratorRepository: RecipeGeneratorRepository,
@@ -31,7 +34,6 @@ class BuildRecipeViewModel(
     private val currentUser: FirebaseUser?
         get() = recipeRepository.getCurrentUser()
     fun saveRecipeToDb(recipe: Recipe) {
-        Log.d("TAG", "saveRecipeToDb: $recipe")
         recipeRepository.addRecipeToUserFavorites(currentUser!!.uid, recipe)
     }
 
@@ -51,6 +53,10 @@ class BuildRecipeViewModel(
                         preProcessed + recipe,
                         recipeImage
                     ), isLoading = false, errorMessage = null
+                )
+            } catch (ex: UnknownHostException) {
+                generatedRecipeState = generatedRecipeState.copy(
+                    null, isLoading = false, "Could not send request to server. Please check your internet connection"
                 )
             } catch (e: Exception) {
                 generatedRecipeState = generatedRecipeState.copy(
