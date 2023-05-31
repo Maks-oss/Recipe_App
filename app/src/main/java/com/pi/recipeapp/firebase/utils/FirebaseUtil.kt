@@ -26,7 +26,7 @@ class FirebaseUtil(
     companion object {
         private const val TAG = "FirebaseUtil"
     }
-    var savedRecipes: List<Recipe?>? = null
+    var savedRecipes: List<Recipe?>? by mutableStateOf(null)
     var currentUser by Delegates.observable(Firebase.auth.currentUser) { _, _, newValue ->
         if (newValue != null) {
             addSavedRecipesListener(newValue.uid) {
@@ -43,7 +43,6 @@ class FirebaseUtil(
     }
 
     fun addRecipeToDatabase(userId: String,recipe: Recipe) {
-//        val userId = currentUser?.uid
         val recipeKey = databaseReference.child("users/${userId}").push()
         Log.d(TAG, "addRecipeToDatabase: ")
         if (recipe.category.startsWith("Own")) {
@@ -63,7 +62,6 @@ class FirebaseUtil(
     }
 
     fun removeRecipesFromDatabase(userId: String, recipes: List<Recipe>) {
-//        val userId = currentUser?.uid
         val ref = databaseReference.child("users/${userId}")
         val query = ref.orderByChild("id")
 
@@ -78,6 +76,9 @@ class FirebaseUtil(
                 }
                 Log.d(TAG, "deleteUserRecipesSuccess: $updates")
                 ref.updateChildren(updates)
+                val mutableList = savedRecipes?.toMutableList()
+                mutableList?.removeAll(recipes)
+                savedRecipes = mutableList
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
@@ -86,7 +87,6 @@ class FirebaseUtil(
         })
     }
     fun addSavedRecipesListener(userId: String,onDataChange: (List<Recipe?>?) -> Unit) {
-//        val userId = currentUser?.uid
         val postListener = object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 val recipes = dataSnapshot.getValue<HashMap<String, Recipe?>>()

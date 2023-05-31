@@ -13,7 +13,6 @@ import com.pi.recipeapp.repository.RecipeGeneratorRepository
 import com.pi.recipeapp.repository.RecipeRepository
 import com.pi.recipeapp.repository.RecipeRepositoryImpl
 import com.pi.recipeapp.retrofit.RetrofitClient
-import com.pi.recipeapp.room.RecipesDatabase
 import com.pi.recipeapp.ui.screens.build.BuildRecipeViewModel
 import com.pi.recipeapp.ui.screens.imagesearch.ImageSearchViewModel
 import com.pi.recipeapp.ui.screens.main.TextSearchViewModel
@@ -35,18 +34,6 @@ val retrofitModule = module {
     single { RetrofitClient.provideRecipesService(get()) }
 }
 
-val databaseModule = module {
-    single {
-        Room.databaseBuilder(androidContext(), RecipesDatabase::class.java, "Recipes Database")
-            .fallbackToDestructiveMigration()
-            .build()
-    }
-    single {
-        get<RecipesDatabase>()
-//            .also { CoroutineScope(Dispatchers.IO).launch { it.clearAllTables() } }
-            .recipesDao()
-    }
-}
 val authModule = module {
     single { GoogleAuth(androidContext()) }
     single { InAppAuth(get()) }

@@ -1,11 +1,8 @@
 package com.pi.recipeapp.mapper
 
 import com.pi.recipeapp.data.domain.Recipe
-import com.pi.recipeapp.data.dto.Categories
-import com.pi.recipeapp.data.dto.Ingredients
 import com.pi.recipeapp.data.dto.Meal
 import com.pi.recipeapp.data.dto.RecipeDto
-import com.pi.recipeapp.room.entity.Ingredient
 import kotlin.reflect.full.memberProperties
 
 object RecipesMapper {
@@ -27,14 +24,6 @@ object RecipesMapper {
                 )
             }
         }
-    }
-
-    fun convertCategoriesToStringList(categories: Categories): List<String> {
-        return categories.meals.map { it.strCategory }
-    }
-
-    fun convertIngredientsToStringList(ingredients: Ingredients): List<String> {
-        return ingredients.meals.map { it.strIngredient }
     }
 
     private fun getIngredients(meal: Meal): Map<String, String> {

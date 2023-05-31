@@ -19,7 +19,8 @@ class RecipeDetailViewModel(private val recipeRepository: RecipeRepository): Vie
         private set
 
     fun addUserRecipeToFavourites(recipe: Recipe) {
-        if (currentUser != null) {
+        val isRecipeExist = recipeRepository.getSavedRecipes()?.contains(recipe) ?: false
+        if (currentUser != null && !isRecipeExist) {
             recipeRepository.addRecipeToUserFavorites(currentUser!!.uid, recipe)
         }
     }

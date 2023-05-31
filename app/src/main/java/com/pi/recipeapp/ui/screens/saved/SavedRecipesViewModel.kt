@@ -20,8 +20,8 @@ class SavedRecipesViewModel(private val recipesRepository: RecipeRepository) : V
         private set
     val savedRecipes: MutableState<List<Recipe?>?>
         get() {
-        return mutableStateOf(recipesRepository.getSavedRecipes())
-    }
+            return mutableStateOf(recipesRepository.getSavedRecipes())
+        }
     val currentUser = recipesRepository.getCurrentUser()
 
     fun removeUserRecipesFromFavorites() {
