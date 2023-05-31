@@ -105,7 +105,7 @@ fun Detail(
                         }
                     }
                 }
-                Ingredients(recipe = recipe, isVisible = isExpandedList)
+                Ingredients(recipe = recipe, isVisible = isExpandedList, isGenerated = recipe.category.startsWith("AI"))
             }
         }
     }
@@ -165,7 +165,7 @@ private fun RecipeImage(recipe: Recipe?) {
 }
 
 @Composable
-private fun Title(
+fun Title(
     isExpanded: Boolean,
     recipe: Recipe,
     onExpandClick: () -> Unit
@@ -176,7 +176,7 @@ private fun Title(
 }
 
 @Composable
-private fun Ingredients(recipe: Recipe, isVisible: Boolean) {
+fun Ingredients(recipe: Recipe, isVisible: Boolean, isGenerated: Boolean = false) {
     val ingredients = recipe.ingredients
     AnimatedVisibility(visible = isVisible) {
         FlowRow(
@@ -195,14 +195,15 @@ private fun Ingredients(recipe: Recipe, isVisible: Boolean) {
                             .crossfade(true)
                             .build(),
                     )
-
-                    Image(
-                        painter = painter,
-                        contentScale = ContentScale.Crop,
-                        contentDescription = "",
-                        modifier = Modifier
-                            .size(50.dp)
-                    )
+                    if (!isGenerated) {
+                        Image(
+                            painter = painter,
+                            contentScale = ContentScale.Crop,
+                            contentDescription = "",
+                            modifier = Modifier
+                                .size(50.dp)
+                        )
+                    }
                     Text(
                         text = ingredient,
                         modifier = Modifier.padding(8.dp),

@@ -1,5 +1,7 @@
 package com.pi.recipeapp.koin
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.room.Room
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
@@ -24,6 +26,7 @@ import com.theokanning.openai.service.OpenAiService
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
+import java.time.Duration
 
 val retrofitModule = module {
     single {
@@ -48,9 +51,10 @@ val authModule = module {
     single { GoogleAuth(androidContext()) }
     single { InAppAuth(get()) }
 }
+@RequiresApi(Build.VERSION_CODES.O)
 val repositoryModule = module {
     single<RecipeRepository> { RecipeRepositoryImpl(get(), get(), LiteModelAiyVisionClassifierFoodV11.newInstance(androidContext())) }
-    single<RecipeGeneratorRepository> { RecipeGeneratorRepository(OpenAiService(BuildConfig.openApiKey)) }
+    single { RecipeGeneratorRepository(OpenAiService(BuildConfig.openApiKey, Duration.ofSeconds(15))) }
 }
 val firebaseModule = module {
     single { Firebase.database.reference }

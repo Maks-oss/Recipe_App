@@ -36,6 +36,8 @@ import com.pi.recipeapp.ui.animation.LoadingShimmerEffect
 import com.pi.recipeapp.ui.scaffold_components.RecipeModalBottomSheet
 import com.pi.recipeapp.ui.scaffold_components.showModalSheetState
 import com.pi.recipeapp.ui.screens.CreatedRecipeDetailPreview
+import com.pi.recipeapp.ui.screens.Ingredients
+import com.pi.recipeapp.ui.screens.Title
 import com.pi.recipeapp.ui.utils.BlankTextField
 import com.pi.recipeapp.ui.utils.CustomSurface
 import com.pi.recipeapp.ui.utils.CustomTabs
@@ -157,6 +159,9 @@ private fun ColumnScope.RecipeGeneration(
     val generatedRecipe = generatedRecipeState.data
     val isLoading = generatedRecipeState.isLoading
     val errorMessage = generatedRecipeState.errorMessage
+    var isExpanded by remember {
+        mutableStateOf(false)
+    }
     if (isLoading) {
         LoadingShimmerEffect(500.dp)
     }
@@ -188,11 +193,10 @@ private fun ColumnScope.RecipeGeneration(
                         Text(text = "Add to favourites")
                     }
                 }
-                Text(
-                    modifier = Modifier.padding(8.dp),
-                    text = generatedRecipe.name,
-                    style = MaterialTheme.typography.h6,
-                )
+                Title(isExpanded, generatedRecipe, onExpandClick = {
+                    isExpanded = !isExpanded
+                })
+                Ingredients(recipe = generatedRecipe, isVisible = isExpanded, isGenerated = true)
                 Text(
                     text = generatedRecipe.instruction, style = MaterialTheme.typography.body1,
                     modifier = Modifier.padding(8.dp)

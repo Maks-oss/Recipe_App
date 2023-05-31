@@ -29,7 +29,7 @@ class ImageSearchViewModel(private val recipeRepository: RecipeRepository): View
             )
             val result =
                 recipeRepository.fetchMealsByPhoto(image)
-            delay(1000)
+            delay(4000)
 
             when (result.second) {
                 is Response.Success -> {

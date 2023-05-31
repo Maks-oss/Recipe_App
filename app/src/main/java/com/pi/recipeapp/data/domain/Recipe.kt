@@ -2,13 +2,13 @@ package com.pi.recipeapp.data.domain
 
 data class Recipe(
     val id: String = "",
-    val name: String = "",
-    val imageUrl: String = "",
-    val instruction: String = "",
+    var name: String = "",
+    var imageUrl: String = "",
+    var instruction: String = "",
     val videoLink: String = "",
     val area: String = "",
     val category: String = "",
-    val ingredients: Map<String,String> = emptyMap(),
+    var ingredients: Map<String,String> = emptyMap(),
     var isSelected: Boolean = false
 ) {
     fun toMap(): Map<String, Any> {

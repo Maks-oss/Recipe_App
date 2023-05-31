@@ -11,12 +11,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseUser
 import com.pi.recipeapp.data.domain.Recipe
-import com.pi.recipeapp.mapper.GeneratedRecipesMapper
 import com.pi.recipeapp.repository.RecipeGeneratorRepository
 import com.pi.recipeapp.repository.RecipeRepository
-import com.pi.recipeapp.repository.RecipeRepositoryImpl
 import com.pi.recipeapp.ui.utils.UiState
-import com.pi.recipeapp.utils.Response
 import kotlinx.coroutines.launch
 import java.net.UnknownHostException
 
@@ -33,32 +30,33 @@ class BuildRecipeViewModel(
         private set
     private val currentUser: FirebaseUser?
         get() = recipeRepository.getCurrentUser()
+
     fun saveRecipeToDb(recipe: Recipe) {
         recipeRepository.addRecipeToUserFavorites(currentUser!!.uid, recipe)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun generateRecipe() {
-        generatedRecipeState = generatedRecipeState.copy(data = null, isLoading = true, errorMessage = null)
+        generatedRecipeState =
+            generatedRecipeState.copy(data = null, isLoading = true, errorMessage = null)
         viewModelScope.launch {
-            val preProcessed = generateRecipeText.replace(" ", ",")
             try {
-                val recipe =
-                    recipeGeneratorRepository.generateRecipe(preProcessed)
-                val recipeImage = recipeGeneratorRepository.generateImage(
-                    preProcessed + GeneratedRecipesMapper.getRecipeName(recipe)
-                )
+                val generatedRecipe =
+                    recipeGeneratorRepository.generateRecipe(generateRecipeText)
+
                 generatedRecipeState = generatedRecipeState.copy(
-                    GeneratedRecipesMapper.convertGeneratedRecipeToRecipe(
-                        preProcessed + recipe,
-                        recipeImage
-                    ), isLoading = false, errorMessage = null
+                    generatedRecipe,
+                    isLoading = false,
+                    errorMessage = null
                 )
             } catch (ex: UnknownHostException) {
                 generatedRecipeState = generatedRecipeState.copy(
-                    null, isLoading = false, "Could not send request to server. Please check your internet connection"
+                    null,
+                    isLoading = false,
+                    "Could not send request to server. Please check your internet connection"
                 )
             } catch (e: Exception) {
+                Log.d("TAG", "generateRecipe: ${e.stackTraceToString()}")
                 generatedRecipeState = generatedRecipeState.copy(
                     null, isLoading = false, e.message
                 )
